@@ -22,5 +22,5 @@
 - [] Capire come funziona il login Google
 - [] Capire come funziona la Mappa
 - [] Capire come salvare i dati
-  
+- [] Trovare la rete neurale
  
