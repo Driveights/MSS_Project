@@ -18,7 +18,7 @@
 
 ## ToDo List
 
-- [] Fare una lista del log di ognuno
+- [x] Fare una lista del log di ognuno
 - [] Capire come funziona il login Google
 - [] Capire come funziona la Mappa
 - [] Capire come salvare i dati
