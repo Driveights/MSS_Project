@@ -20,19 +20,20 @@
 
 - [x] Fare una lista del log di ognuno
 - [] Capire come funziona il login Google
-- [] Capire come funziona la Mappa
+- [x] Capire come funziona la Mappa
 - [] Capire come salvare i dati
-- [] Trovare la rete neurale
+- [x] Trovare la rete neurale
 
 
 ### Daniel e Lorenzo
 
-- [] Trovare rete neurale 
+- [x] Trovare rete neurale 
 - [] Trovare database associato
+- [x] Capire come funziona la Mappa
+
 
 ### Marco e Davide
 
 - [] Capire come funziona login Google
-- [] Capire come funziona mappa Google
 
  

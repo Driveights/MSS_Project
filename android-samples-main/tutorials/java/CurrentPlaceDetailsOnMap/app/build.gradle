@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.application'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
+}
+
+android {
+    compileSdk 34
+    defaultConfig {
+        applicationId "com.example.currentplacedetailsonmap"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+    buildFeatures {
+        buildConfig = true
+    }
+    buildTypes {
+        debug {
+            debuggable true
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    namespace 'com.example.currentplacedetailsonmap'
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.gms:play-services-maps:18.2.0'
+    implementation 'com.google.android.libraries.places:places:3.4.0'
+    implementation 'com.android.volley:volley:1.2.1'
+    testImplementation'junit:junit:4.13.2'
+}
+
+secrets {
+    // Optionally specify a different file name containing your secrets.
+    // The plugin defaults to "local.properties"
+    propertiesFileName = "secrets.properties"
+
+    // A properties file containing default secret values. This file can be
+    // checked in version control.
+    defaultPropertiesFileName = 'local.defaults.properties'
+}

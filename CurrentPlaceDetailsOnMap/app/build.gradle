@@ -1,0 +1,70 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
+}
+
+android {
+    compileSdk 34
+    defaultConfig {
+        applicationId "com.example.currentplacedetailsonmap"
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+    buildFeatures {
+        buildConfig = true
+        mlModelBinding true
+    }
+    buildTypes {
+        debug {
+            debuggable true
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    namespace 'com.example.currentplacedetailsonmap'
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
+    implementation 'be.tarsos.dsp:core:2.5'
+    implementation 'be.tarsos.dsp:jvm:2.5'
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:3.0.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.gms:play-services-maps:18.2.0'
+    implementation 'com.google.android.libraries.places:places:3.4.0'
+    implementation 'com.android.volley:volley:1.2.1'
+    testImplementation'junit:junit:4.13.2'
+    implementation "androidx.core:core-ktx:1.13.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'org.tensorflow:tensorflow-lite-task-vision:+'
+    implementation 'org.tensorflow:tensorflow-lite-task-text:+'
+    implementation 'org.tensorflow:tensorflow-lite-task-audio:+'
+    implementation 'org.tensorflow:tensorflow-lite:+'
+    implementation 'org.tensorflow:tensorflow-lite-support:+'
+
+}
+
+secrets {
+    // To add your Maps API key to this project:
+    // 1. Open the root project's local.properties file
+    // 2. Add this line, where YOUR_API_KEY is your API key:
+    //        MAPS_API_KEY=YOUR_API_KEY
+    defaultPropertiesFileName 'local.defaults.properties'
+}
+

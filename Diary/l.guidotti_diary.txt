@@ -1,3 +1,29 @@
+Lorenzo Guidotti
+
+Line of codes: -
+Number of commits: -
+
+Non coding activities:
+- Machine Learning Model for Speech Emotion Recognition research
+
 24/04/2024
-Group meeting, discussion about:
-- 
+Group Meeting: discussion about:
+	- application interface design;
+	- which data need to be stored;
+	- if and how to use Google API to login and to use the map;
+	- search a neural network for speech emotion recognition
+	- we decide to implement favorites friends approach
+	- we decide to ask to the user if he/she want to allow the GPS
+	- role division
+
+26/04/2024
+Pair work with Daniel Deiana:
+	- Android Studio Project creation
+	- Integration of Google Map in the project
+	- Research for ML model
+	- Integration of the ML model in the project
+
+29/04/2024
+Pair work with Daniel Deiana:
+	- Recording button logic
+
