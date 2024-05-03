@@ -11,14 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package com.example.currentplacedetailsonmap
+package com.example.GeMotions
 
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.location.Location
-import android.media.MediaExtractor
 import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.os.Bundle
@@ -30,12 +29,10 @@ import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.currentplacedetailsonmap.ml.SerQuant
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -51,22 +48,7 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
-import org.tensorflow.lite.DataType
 import java.io.IOException
-import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
-import java.io.File
-import java.io.FileInputStream
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.nio.MappedByteBuffer
-import java.nio.channels.FileChannel
-import be.tarsos.dsp.AudioDispatcher
-import be.tarsos.dsp.AudioEvent
-import be.tarsos.dsp.io.TarsosDSPAudioFormat
-import be.tarsos.dsp.io.TarsosDSPAudioFormat.NOT_SPECIFIED
-import be.tarsos.dsp.io.jvm.AudioDispatcherFactory
-import be.tarsos.dsp.mfcc.MFCC
 
 /**
  * An activity that displays a map showing the place at the device's current location.
