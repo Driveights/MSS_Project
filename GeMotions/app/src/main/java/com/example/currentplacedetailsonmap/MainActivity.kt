@@ -62,6 +62,9 @@ import java.nio.ByteOrder
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 import be.tarsos.dsp.AudioDispatcher
+import be.tarsos.dsp.AudioEvent
+import be.tarsos.dsp.io.TarsosDSPAudioFormat
+import be.tarsos.dsp.io.TarsosDSPAudioFormat.NOT_SPECIFIED
 import be.tarsos.dsp.io.jvm.AudioDispatcherFactory
 import be.tarsos.dsp.mfcc.MFCC
 
@@ -156,13 +159,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-
-
-    private fun getAudioData(byteBuffer: ByteBuffer) {
-        val model =
-            SerQuant.newInstance(this) // Assicurati di chiamare questa funzione all'interno dell'Activity o del Fragment
-    }
-
     private fun stopRecording() {
         Log.d(TAG, "Ho finito registrare")
         if (isRecording) {
@@ -173,18 +169,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 // Prendi i dati audio registrati
                 val filePath = externalCacheDir!!.absolutePath + "/audio_record.mp3"
-                // TODO usare tarsos
 
-                // Esegui l'inferenza del modello e ottieni il risultato
-                val model = SerQuant.newInstance(this)
-                val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, mfccFeatures.size, NUM_MFCC), DataType.FLOAT32)
-                inputFeature0.loadBuffer(byteBuffer)
-                val outputs = model.process(inputFeature0)
-                val outputFeature0 = outputs.outputFeature0AsTensorBuffer
-                Log.d(TAG, "Ho trovato che l'emozione è $outputFeature0")
-
-                // Rilascia le risorse del modello
-                model.close()
 
                 // Riproduci il file audio
                 val mediaPlayer = MediaPlayer().apply {
@@ -231,15 +216,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
 
-    fun mp3ToByteBuffer(filePath: String): ByteBuffer {
-        val file = File(filePath)
-        val fileChannel = FileInputStream(file).channel
-        val fileSize = fileChannel.size()
-        val byteBuffer = ByteBuffer.allocate(fileSize.toInt())
-        fileChannel.read(byteBuffer)
-        byteBuffer.flip()
-        return byteBuffer
-    }
     // [END maps_current_place_on_create]
 
     /**
