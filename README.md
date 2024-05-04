@@ -19,11 +19,12 @@
 ## ToDo List
 
 - [x] Fare una lista del log di ognuno
-- [] Capire come funziona il login Google
+- [x] Capire come funziona il login Google
 - [x] Capire come funziona la Mappa
 - [] Capire come salvare i dati
 - [x] Trovare la rete neurale
-
+- [] Una volta terminata l'app, controllare che nel ruotare lo schermo/ricevere una chiamata/chiudere riaprire l'app, questa non crashi
+- [] Controllare che dark and white theme siano impostati bene
 
 ### Daniel e Lorenzo
 
