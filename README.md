@@ -57,4 +57,12 @@ Salvare il link al file audio su Google Cloud Storage (GCS) in Firestore:
 
 - [x] Capire come funziona login Google
 
+
+### Proposta flusso app:
+- Login/Registrazione (inviare l'email di avvenuta registrazione/conferma account?)
+- Schermata home: barra in alto - mappa - parte in basso per ascoltare audio/vedere info/registrare
+- Caricata la mappa si fa la query al db per raccogliere le coppie luogo-emozione e mettere i segnaposto nella mappa
+- Se l'utente clicca su un luogo: mostrare informazioni (?), mostrare emozione, mostrare i primi n audio (capire come fare paginazione)
+- Se l'utente clicca sul tasto per registrare: registrare, mostrare a schermo: la possibilità di riprodurre l'audio, il luogo (come instagram) e tasto per caricare / annullare l'operazione
+- Per ora tutti amici di tutti, se avanza tempo, fare gestione amicizie e/o informazioni personali dell'utente tipo username e così via
  
