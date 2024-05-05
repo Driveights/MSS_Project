@@ -14,3 +14,14 @@ Group Meeting: discussion about:
 	- we decide to implement favorites friends approach
 	- we decide to ask to the user if he/she want to allow the GPS
 	- role division
+
+03/05
+Collected information about Authentication, CloudFire and Login with Google. Start implementation of Authentication part
+
+04/05 
+Implementation of Login and Registration part (using only email address and password, no personal user information)
+
+05/05
+- Add dark theme to authentication part
+- Collected information on which database to use. Cloud Firestore proposed, motivations: -- . Group discussion is needed.
+- Proposed an application execution flow. Group discussion is needed
