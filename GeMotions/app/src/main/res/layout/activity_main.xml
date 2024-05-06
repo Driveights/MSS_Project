@@ -31,11 +31,22 @@
         android:id="@+id/recordButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center"
+        android:layout_gravity="bottom|right"
         android:layout_margin="32dp"
         android:text="Rec"
         android:textColor="#FFFFFF"
-        android:background="@drawable/button_recording_inactive" />
+        style="@style/AppTheme.RoundedCornerMaterialButton"
+        tools:ignore="RtlHardcoded" />
 
+    <Button
+        android:id="@+id/emotionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|left"
+        android:layout_margin="32dp"
+        android:text="Emoji"
+        android:textColor="#FFFFFF"
+        style="@style/AppTheme.RoundedCornerMaterialButton"
+        tools:ignore="RtlHardcoded" />
 </FrameLayout>
 

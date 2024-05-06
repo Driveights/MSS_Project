@@ -279,19 +279,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         menuInflater.inflate(R.menu.current_place_menu, menu)
         return true
     }
-
-    /**
-     * Handles a click on the menu option to get a place.
-     * @param item The menu item to handle.
-     * @return Boolean.
-     */
-    // [START maps_current_place_on_options_item_selected]
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.option_get_place) {
-            showCurrentPlace()
-        }
-        return true
-    }
     // [END maps_current_place_on_options_item_selected]
 
     /**

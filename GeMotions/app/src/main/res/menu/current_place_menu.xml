@@ -13,13 +13,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/option_get_place"
-        android:title="@string/option_get_place"
+        android:id="@+id/amici"
+        android:title="@string/amici"
         app:showAsAction="always"/>
 
     <item
-        android:id="@+id/cazzi"
-        android:title="@string/cazzi"
+        android:id="@+id/logout"
+        android:title="@string/logout"
         app:showAsAction="ifRoom"/>
 
 </menu>
