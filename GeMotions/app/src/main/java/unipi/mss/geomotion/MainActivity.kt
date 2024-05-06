@@ -11,14 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package com.example.GeMotions
+package unipi.mss.geomotion
 
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.location.Location
-import android.media.MediaPlayer
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.util.Log
@@ -29,10 +30,12 @@ import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.github.squti.androidwaverecorder.WaveRecorder
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -48,7 +51,11 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
-import java.io.IOException
+import vokaturi.vokaturisdk.entities.Voice
+import java.io.DataInputStream
+import java.io.File
+import java.io.FileInputStream
+
 
 /**
  * An activity that displays a map showing the place at the device's current location.
@@ -84,6 +91,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var permissionToRecordAccepted = false
     private var recorder: MediaRecorder? = null
     private var isRecording = false
+    private lateinit var waveRecorder: WaveRecorder
+
 
 
     // [START maps_current_place_on_create]
@@ -120,6 +129,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // [END maps_current_place_map_fragment]
         // [END_EXCLUDE]
 
+        val filePath: String = externalCacheDir?.absolutePath + "/audioFile.wav"
+        waveRecorder = WaveRecorder(filePath)
+
+
         val recordButton = findViewById<Button>(R.id.recordButton)
         recordButton.setOnTouchListener { _, event ->
             when (event.action) {
@@ -128,75 +141,119 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     recordButton.setBackgroundResource(R.drawable.button_recording_active)
                     true
                 }
+
                 MotionEvent.ACTION_UP -> {
                     stopRecording()
                     recordButton.setBackgroundResource(R.drawable.button_recording_inactive)
                     true
                 }
+
                 else -> false
             }
         }
 
-        ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION)
-
-    }
-
-    private fun stopRecording() {
-        Log.d(TAG, "Ho finito registrare")
-        if (isRecording) {
-            try {
-                recorder?.stop()
-                recorder?.release()
-                isRecording = false
-
-                // Prendi i dati audio registrati
-                val filePath = externalCacheDir!!.absolutePath + "/audio_record.mp3"
-
-
-                // Riproduci il file audio
-                val mediaPlayer = MediaPlayer().apply {
-                    setDataSource(filePath)
-                    prepare()
-                    start()
-                    setOnCompletionListener {
-                        release()
-                    }
-                }
-
-                mediaPlayer.setOnErrorListener { mp, what, extra ->
-                    Log.e(TAG, "Errore durante la riproduzione dell'audio")
-                    false
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_RECORD_AUDIO_PERMISSION)
+        } else {
+            permissionToRecordAccepted = true
         }
-    }
 
+
+    }
 
     private fun startRecording() {
         Log.d(TAG, "Sto iniziando a registrare")
         if (permissionToRecordAccepted && !isRecording) {
-            recorder = MediaRecorder().apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                setOutputFile(externalCacheDir!!.absolutePath + "/audio_record.mp3")
-                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-
-                try {
-                    prepare()
-                    start()
-                    isRecording = true
-                }
-                catch (e: IOException) {
-                    e.printStackTrace()
-                }
-            }
+            // Avvio della registrazione con WaveRecorder
+            waveRecorder.waveConfig.sampleRate = 44100
+            waveRecorder.waveConfig.channels = AudioFormat.CHANNEL_IN_STEREO
+            waveRecorder.waveConfig.audioEncoding = AudioFormat.ENCODING_PCM_8BIT
+            waveRecorder.startRecording()
+            isRecording = true
         }
-
     }
 
 
+
+    // Funzione per interrompere la registrazione
+    private fun stopRecording() {
+        if (isRecording) {
+            // Interruzione della registrazione con WaveRecorder
+            Log.d(TAG, "Sto finendo di registrare")
+            waveRecorder.stopRecording()
+            isRecording = false
+        }
+
+        // Percorso del file audio .wav
+        val filePath: String = externalCacheDir?.absolutePath + "/audioFile.wav"
+
+        val floatArray = wavToFloatArray(filePath)
+        val voice = floatArray?.let { Voice(44100.0f, it.size) }
+        voice?.fill(floatArray)
+        val pr = voice?.extract()
+
+        if (pr != null) {
+            Log.d(TAG, "Validità: " + pr.isValid)
+        }
+        if (pr != null) {
+            // Ordinare le emozioni in ordine decrescente di valore
+            val emotions = listOf(
+                "Neutralità" to pr.neutrality,
+                "Felicità" to pr.happiness,
+                "Rabbia" to pr.anger,
+                "Tristezza" to pr.sadness,
+                "Paura" to pr.fear
+            ).sortedByDescending { it.second }
+
+            // Costruire la stringa delle informazioni in ordine decrescente
+            val emotionInfo = emotions.joinToString("\n") { "${it.first}: ${it.second}" }
+
+            // Stampare le informazioni utilizzando Toast
+            showToast(emotionInfo)
+        }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun wavToFloatArray(filePath: String): FloatArray? {
+        val file = File(filePath)
+
+        // Verifica che il file esista
+        if (!file.exists()) {
+            return null
+        }
+
+        // Impostazioni per AudioRecord
+        val sampleRate = 44100
+        val channelConfig = AudioFormat.CHANNEL_IN_MONO
+        val audioFormat = AudioFormat.ENCODING_PCM_16BIT
+        val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+
+        // Leggi i dati audio dal file WAV
+        val floatData = mutableListOf<Float>()
+        val inputStream = FileInputStream(file)
+        val dataInputStream = DataInputStream(inputStream)
+
+
+        // Leggi i dati audio e convertili in float
+        val data = ByteArray(bufferSize)
+        while (dataInputStream.available() > 0) {
+            val read = dataInputStream.read(data)
+            for (i in 0 until read / 2) { // Assuming 16-bit audio
+                val sample = (data[i * 2 + 1].toInt() shl 8) or (data[i * 2].toInt() and 0xFF)
+                floatData.add(sample.toFloat() / Short.MAX_VALUE) // Normalizza a [-1, 1]
+            }
+        }
+
+        // Chiudi i flussi
+        dataInputStream.close()
+        inputStream.close()
+
+        // Converte i dati float in FloatArray
+        return floatData.toFloatArray()
+    }
 
     // [END maps_current_place_on_create]
 
@@ -333,7 +390,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             locationPermissionGranted = true
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION)
+                PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
+            )
         }
     }
     // [END maps_current_place_location_permission]
@@ -357,11 +415,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             REQUEST_RECORD_AUDIO_PERMISSION -> {
                 // Gestisci il risultato della richiesta di permessi per la registrazione audio
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permesso concesso
                     permissionToRecordAccepted = true
+                    // Avvia la registrazione se i permessi sono stati concessi
+                    startRecording()
                 } else {
-                    // Permesso negato, puoi gestire questa situazione come preferisci
-                    // Ad esempio, mostrando un messaggio di errore o disabilitando le funzionalità di registrazione audio
+                    // Gestisci il caso in cui i permessi non sono stati concessi
+                    Toast.makeText(this, "Permessi di registrazione audio non concessi", Toast.LENGTH_SHORT).show()
                 }
             }
             else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -519,3 +578,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val M_MAX_ENTRIES = 5
     }
 }
+
+
+

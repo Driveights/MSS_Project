@@ -27,3 +27,7 @@ Pair work with Daniel Deiana:
 Pair work with Daniel Deiana:
 	- Recording button logic
 
+04/05/2024
+	- Audio conversion in .wav format
+
+

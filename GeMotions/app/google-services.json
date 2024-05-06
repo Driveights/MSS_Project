@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "193687748790",
+    "project_id": "geomotion-195dc",
+    "storage_bucket": "geomotion-195dc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:193687748790:android:0356b79f13f550b91fa617",
+        "android_client_info": {
+          "package_name": "unipi.mss.geomotion"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "193687748790-5360bm3vg3j2bm4h2if0s6tmdlpjbga0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "unipi.mss.geomotion",
+            "certificate_hash": "f7af98deda5d68b24b84e21fccf35c0293a09225"
+          }
+        },
+        {
+          "client_id": "193687748790-j13cpdoa75iliam847soi6au4v3o9ci8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsHsMTc4XV1KeOAWcOIpx8eZgU3ZBoTtQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "193687748790-j13cpdoa75iliam847soi6au4v3o9ci8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

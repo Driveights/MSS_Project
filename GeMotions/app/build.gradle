@@ -2,12 +2,13 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
+    id 'com.google.gms.google-services'
 }
 
 android {
     compileSdk 34
     defaultConfig {
-        applicationId "com.example.GeMotions"
+        applicationId "unipi.mss.geomotion"
         minSdk 23
         targetSdk 34
         versionCode 1
@@ -32,7 +33,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    namespace 'com.example.GeMotions'
+    namespace 'unipi.mss.geomotion'
 }
 
 dependencies {
@@ -41,6 +42,8 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
     implementation 'be.tarsos.dsp:core:2.5'
     implementation 'be.tarsos.dsp:jvm:2.5'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.gridlayout:gridlayout:1.0.0'
     androidTestImplementation('com.android.support.test.espresso:espresso-core:3.0.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
@@ -59,19 +62,27 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite-support:+'
 
     // Import the BoM for the Firebase platform
-    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
 
     // Add the dependency for the Firebase ML model downloader library
     // When using the BoM, you don't specify versions in Firebase library dependencies
-    implementation("com.google.firebase:firebase-ml-modeldownloader")
+    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.android.gms:play-services-auth:21.1.1")
+    implementation 'com.google.firebase:firebase-analytics'
 
     // Also add the dependency for the TensorFlow Lite library and specify its version
     implementation("org.tensorflow:tensorflow-lite:2.3.0")
     implementation 'com.writingminds:FFmpegAndroid:0.3.2'
     implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever:1.0.14'
+    implementation files("../OpenVokaturi-4-0-android.aar")
+    implementation 'com.github.squti:Android-Wave-Recorder:1.7.0'
+
 
 
 }
+
+apply plugin: 'com.google.gms.google-services'
+
 
 secrets {
     // To add your Maps API key to this project:

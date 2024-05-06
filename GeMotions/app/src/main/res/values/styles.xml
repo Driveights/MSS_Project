@@ -16,12 +16,27 @@
 
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- Base application theme.
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+    </style>-->
+
+    <style name="AppTheme" parent="Theme.Material3.Light">
+        <!-- Stili per il tema chiaro -->
+    </style>
+
+    <style name="AppTheme.Dark" parent="Theme.Material3.Dark">
+        <!-- Stili per il tema scuro -->
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Stili per il tema senza ActionBar -->
+    </style>
+
+    <style name="AppTheme.Dark.NoActionBar" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Stili per il tema senza ActionBar -->
     </style>
 
 </resources>
