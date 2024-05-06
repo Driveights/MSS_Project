@@ -1,26 +1,17 @@
 # MSS_Project
 
 ## Cose da implementare
-
-- Login tramite Google
-- Trovare rete neurale e capire se deve girare sul telefono
 - Per ora tutti vedono gli audio di tutti
 - Dopo un giorno dall'input audio gli audio spariscono
+- Potenzialmente cambiare rete neurale
   
 
 ## Schermata
 
-- Sarà 70% mappa, quando una persona vuole _aggiungere un audio_, deve _scegliere un punto di interesse_.
-- La lista dei possibili audio sarà quindi disponibile collegata al luogo di interesse con la relativa emozione.
-- Questa verrà calcolata _subito appena l'audio viene registrato_ e salvata direttamente nel database.
-- Saranno visibili dei _cerchi intorno al luogo di interesse con il colore dell'emozione_.
+-Le emozioni sono visibili solo dopo il tocco /la selezione di un luogo sulla mappa
   
 
 ## ToDo List
-
-- [x] Fare una lista del log di ognuno
-- [x] Capire come funziona il login Google
-- [x] Capire come funziona la Mappa
 - [] Capire come salvare i dati --> Useare FireStore, perchè: permette la gestione dei TTL in modo facile (Cancellazione automatica degli elementi dopo un tot, quell oche vogliamo noi); permette ordinamento e filtro composti (RealTime database non permette query con ordinamento e filtro composti); in ottica di scalarizzazione "ospita i tuoi dati in più data center in regioni distinte, garantendo scalabilità globale e forte affidabilità";
 Probabilmente conviene usare Google Cloud per salvare gli audio e mettere nella collezione il link per scaricare (2 chiamate HTTP); altrimenti mettere tutto su Firestore, riporto cosa suggerisce ChatGPT 
 "
@@ -42,27 +33,11 @@ Salvare il link al file audio su Google Cloud Storage (GCS) in Firestore:
     Complessità: Richiede l'implementazione di un sistema per gestire l'upload e il download dei file da GCS, oltre a dover gestire eventuali problemi di autorizzazione e sicurezza.
     Prestazioni: L'accesso ai file audio richiede un'ulteriore richiesta HTTP e potrebbe influire sulle prestazioni dell'applicazione, specialmente in caso di connessioni lente o instabili.
   "
-- [x] Trovare la rete neurale
 - [] Una volta terminata l'app, controllare che nel ruotare lo schermo/ricevere una chiamata/chiudere riaprire l'app, questa non crashi
 - [] Controllare che dark and white theme siano impostati bene
 
 ### Daniel e Lorenzo
-
-- [x] Trovare rete neurale 
-- [] Trovare database associato
-- [x] Capire come funziona la Mappa
-
+- Implementare registrazione audio
 
 ### Marco e Davide
-
-- [x] Capire come funziona login Google
-
-
-### Proposta flusso app:
-- Login/Registrazione (inviare l'email di avvenuta registrazione/conferma account?)
-- Schermata home: barra in alto - mappa - parte in basso per ascoltare audio/vedere info/registrare
-- Caricata la mappa si fa la query al db per raccogliere le coppie luogo-emozione e mettere i segnaposto nella mappa
-- Se l'utente clicca su un luogo: mostrare informazioni (?), mostrare emozione, mostrare i primi n audio (capire come fare paginazione)
-- Se l'utente clicca sul tasto per registrare: registrare, mostrare a schermo: la possibilità di riprodurre l'audio, il luogo (come instagram) e tasto per caricare / annullare l'operazione
-- Per ora tutti amici di tutti, se avanza tempo, fare gestione amicizie e/o informazioni personali dell'utente tipo username e così via
- 
+- Implementare ricerca dei luoghi
