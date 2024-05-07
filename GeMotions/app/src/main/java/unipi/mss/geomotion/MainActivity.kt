@@ -18,6 +18,8 @@ import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
 import android.location.Location
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -58,6 +60,7 @@ import vokaturi.vokaturisdk.entities.Voice
 import java.io.DataInputStream
 import java.io.File
 import java.io.FileInputStream
+import java.util.Locale
 
 
 /**
@@ -138,7 +141,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        // Prompt the user for permission.
+        getLocationPermission()
         // [START_EXCLUDE silent]
         // Retrieve location and camera position from saved instance state.
         // [START maps_current_place_on_create_save_instance_state]
@@ -328,8 +332,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(map: GoogleMap) {
         this.map = map
 
-        // [START_EXCLUDE]
-        // [START map_current_place_set_info_window_adapter]
         // Use a custom info window adapter to handle multiple lines of text in the
         // info window contents.
         this.map?.setInfoWindowAdapter(object : InfoWindowAdapter {
@@ -349,19 +351,43 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 return infoWindow
             }
         })
-        // [END map_current_place_set_info_window_adapter]
 
-        // Prompt the user for permission.
-        getLocationPermission()
-        // [END_EXCLUDE]
+        // Get the current location of the device and set the position of the map.
+        getDeviceLocation()
 
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI()
 
-        // Get the current location of the device and set the position of the map.
-        getDeviceLocation()
+        //MARCO
+
+        var currentMarker: Marker? = null
+        map.setOnMapClickListener { latLng ->
+            // Rimuovi il marker precedente se presente
+            currentMarker?.remove()
+
+            // Ottieni le coordinate toccate
+            val latitude = latLng.latitude
+            val longitude = latLng.longitude
+
+            // Ottieni il nome del luogo toccato utilizzando Geocoder
+            val geocoder = Geocoder(this, Locale.getDefault())
+            val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1)!!
+            if (addresses.isNotEmpty()) {
+                val address = addresses[0]
+                val placeName = address.featureName ?: "Nome del luogo non disponibile"
+                val addressString = address.thoroughfare ?: "Indirizzo non disponibile"
+                // Aggiungi un marker alla posizione toccata
+                val markerOptions = MarkerOptions().position(latLng).title(addressString).snippet("Emotion: HAPPY")
+                currentMarker = map.addMarker(markerOptions)
+                // Mostra le informazioni ottenute in un Toast
+                Toast.makeText(this, "Touched at: $placeName con indirizzo $addressString", Toast.LENGTH_SHORT).show()
+                currentMarker?.showInfoWindow()
+            }
+
+        }
+
     }
-    // [END maps_current_place_on_map_ready]
+
 
     /**
      * Gets the current location of the device, and positions the map's camera.
@@ -590,7 +616,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // [END maps_current_place_update_location_ui]
 
     companion object {
-        private val TAG = MainActivity::class.java.simpleName
+        internal val TAG = MainActivity::class.java.simpleName
         private const val DEFAULT_ZOOM = 15
         private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
