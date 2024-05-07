@@ -117,6 +117,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mGoogleSignInClient: GoogleSignInClient
     private val mAuth = FirebaseAuth.getInstance()
 
+    // Gestione db
+    private val dbManager = DbManager()
+
     private var chosenRadius = 100.0;
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -157,40 +160,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        /*
-        val db = Firebase.firestore
-        val user = hashMapOf(
-            "email" to (mAuth.currentUser?.email ?: "prova@example.com"),
-            "lat" to 10.2,
-            "long" to 10.2,
-            "emotion" to "happy",
-            "audio" to "gs://geomotion-195dc.appspot.com/kill-bill.wav"
-        )
-
-        // Add a new document with a generated ID
-        db.collection("recordings")
-            .add(user)
-            .addOnSuccessListener { documentReference ->
-                Log.d(TAG, "Ha scritto sul db")
-            }
-            .addOnFailureListener { e ->
-                Log.w(TAG, "Error adding document", e)
-            }
-
-        db.collection("recordings")
-            .get()
-            .addOnSuccessListener { result ->
-
-                for (document in result) {
-                    Log.d(TAG, "Abbiamo letto dal db, non riusciamo ad accedere")
-                    Log.d(TAG, "${document.id} => ${document.data}")
-                }
-            }
-            .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents.", exception)
-            }
-
-         */
 
         val storage = FirebaseStorage.getInstance()
         var storageRef = storage.reference
@@ -449,7 +418,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         updateLocationUI()
 
         //MARCO
-
         var currentMarker: Marker? = null
         var currentCircle: Circle? = null
 
@@ -461,6 +429,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             val latitude = latLng.latitude
             val longitude = latLng.longitude
 
+            val db = Firebase.firestore
+            val recordingsResultDTO = dbManager.getRecordings(latitude,longitude,chosenRadius)
+
             // Ottieni il nome del luogo toccato utilizzando Geocoder
             val geocoder = Geocoder(this, Locale.getDefault())
             val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1)!!
@@ -469,7 +440,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 val placeName = address.featureName ?: "Nome del luogo non disponibile"
                 val addressString = address.thoroughfare ?: "Indirizzo non disponibile"
                 // Aggiungi un marker alla posizione toccata
-                val markerOptions = MarkerOptions().position(latLng).title(addressString).snippet("Emotion: HAPPY")
+                val markerOptions = MarkerOptions().position(latLng).title(addressString).snippet("Emotion: ${recordingsResultDTO.getEmotion()}")
                     .icon(defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)) // Set the icon for the marker
                 currentMarker = map.addMarker(markerOptions)
                 // Mostra le informazioni ottenute in un Toast
