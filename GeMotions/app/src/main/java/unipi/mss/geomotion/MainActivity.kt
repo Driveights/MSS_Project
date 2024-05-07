@@ -491,20 +491,27 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         map.setOnInfoWindowClickListener { marker ->
-            // Crea un AlertDialog personalizzato
+            // Creazione del dialog personalizzato
             val builder = AlertDialog.Builder(this, R.style.RoundedAlertDialog)
-            builder.setTitle("Recordings")
-            builder.setMessage("Dettagli aggiuntivi: ${marker.snippet}")
+            builder.setTitle("RECORDINGS")
+
+            // Creazione del layout personalizzato per il dialog
+            val dialogLayout = layoutInflater.inflate(R.layout.custom_dialog_layout, null)
+
+            // Aggiungi il layout personalizzato al dialog
+            builder.setView(dialogLayout)
 
             // Aggiungi un pulsante per chiudere il popup
-            builder.setPositiveButton("OK") { dialog, _ ->
+            builder.setPositiveButton("Chiudi") { dialog, _ ->
                 dialog.dismiss() // Chiudi il popup quando il pulsante viene premuto
             }
 
             // Mostra il dialogo
             val dialog = builder.create()
             dialog.show()
+
         }
+
     }
 
 
