@@ -11,8 +11,7 @@
      limitations under the License.
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@color/purple_transparent">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <!-- <item
         android:id="@+id/amici"
         android:title="@string/amici"

@@ -16,9 +16,6 @@
 -->
 
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
     <color name="purple_200">#0F9D58</color>
     <color name="purple_500">#0F9D58</color>
     <color name="purple_700">#0F9D58</color>
@@ -29,5 +26,6 @@
     <color name="gray">#A39696</color>
     <color name="blue">#459DE4</color>
     <color name="red">#FF0000</color>
-    <color name="purple_transparent">#D8800080</color>
+    <color name="purple_material_design_3">?attr/colorPrimary</color>
+    <color name="purple_container_material_design_3">?attr/colorPrimaryContainer</color>
 </resources>

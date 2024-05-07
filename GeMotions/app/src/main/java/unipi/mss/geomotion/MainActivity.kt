@@ -32,6 +32,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -55,11 +56,14 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.material.slider.Slider
 import com.google.firebase.auth.FirebaseAuth
 import vokaturi.vokaturisdk.entities.Voice
 import java.io.DataInputStream
 import java.io.File
 import java.io.FileInputStream
+import java.text.NumberFormat
+import java.util.Currency
 import java.util.Locale
 
 
@@ -176,23 +180,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         waveRecorder = WaveRecorder(filePath)
 
 
-        val recordButton = findViewById<Button>(R.id.recordButton)
+        val recordButton = findViewById<ImageButton>(R.id.recordButton)
         recordButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     startRecording()
-                    recordButton.setBackgroundResource(R.drawable.button_recording_active)
+                    recordButton.setBackgroundColor(R.color.purple_material_design_3)
+                    recordButton.setImageResource(R.drawable.microphone_down)
+                    recordButton.setBackgroundResource(R.drawable.round_button)
                     true
                 }
 
                 MotionEvent.ACTION_UP -> {
                     stopRecording()
-                    recordButton.setBackgroundResource(R.drawable.button_recording_inactive)
+                    recordButton.setBackgroundColor(R.color.purple_container_material_design_3)
+                    recordButton.setImageResource(R.drawable.microphone)
+                    recordButton.setBackgroundResource(R.drawable.round_button)
                     true
                 }
 
                 else -> false
             }
+        }
+
+        val slider = findViewById<Slider>(R.id.slider)
+        slider.setLabelFormatter { value: Float ->
+            "${value.toInt()} m"
+        }
+
+        slider.addOnChangeListener { rangeSlider, value, fromUser ->
+            Log.d(TAG, "Slider value is $value")
         }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
