@@ -25,3 +25,16 @@ Implementation of Login and Registration part (using only email address and pass
 - Add dark theme to authentication part
 - Collected information on which database to use. Cloud Firestore proposed, motivations: -- . Group discussion is needed.
 - Proposed an application execution flow. Group discussion is needed
+
+06/05
+Group Meeting:
+- we decided on the final look of the UI, the main features and possible future developments
+- role division
+- merge of work carried out individually
+
+07/05
+- Logout implementation
+- Backend for recordings storage and retrieval
+Work done in pairs with M. Galante:
+- Configuration and test of Google Storage and Firestore
+- Improvement and  bug fixing of UI
