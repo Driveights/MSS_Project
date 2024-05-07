@@ -48,5 +48,6 @@
         android:textColor="#FFFFFF"
         style="@style/AppTheme.RoundedCornerMaterialButton"
         tools:ignore="RtlHardcoded" />
+
 </FrameLayout>
 
