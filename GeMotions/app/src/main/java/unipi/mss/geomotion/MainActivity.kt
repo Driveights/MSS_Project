@@ -23,7 +23,9 @@ import android.location.Geocoder
 import android.location.Location
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.MediaPlayer
 import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -57,7 +59,10 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.slider.Slider
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.firestore
+import com.google.firebase.storage.FirebaseStorage
 import vokaturi.vokaturisdk.entities.Voice
 import java.io.DataInputStream
 import java.io.File
@@ -145,6 +150,67 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        /*
+        val db = Firebase.firestore
+        val user = hashMapOf(
+            "email" to (mAuth.currentUser?.email ?: "prova@example.com"),
+            "lat" to 10.2,
+            "long" to 10.2,
+            "emotion" to "happy",
+            "audio" to "gs://geomotion-195dc.appspot.com/kill-bill.wav"
+        )
+
+        // Add a new document with a generated ID
+        db.collection("recordings")
+            .add(user)
+            .addOnSuccessListener { documentReference ->
+                Log.d(TAG, "Ha scritto sul db")
+            }
+            .addOnFailureListener { e ->
+                Log.w(TAG, "Error adding document", e)
+            }
+
+        db.collection("recordings")
+            .get()
+            .addOnSuccessListener { result ->
+
+                for (document in result) {
+                    Log.d(TAG, "Abbiamo letto dal db, non riusciamo ad accedere")
+                    Log.d(TAG, "${document.id} => ${document.data}")
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents.", exception)
+            }
+
+         */
+
+        val storage = FirebaseStorage.getInstance()
+        var storageRef = storage.reference
+        /*
+        val mountainsRef = storageRef.child("kill-bill.wav")
+        val audioUpload = mountainsRef.putFile(Uri.fromFile(File("kill-bill.wav")))
+        var download_uri: String? = null
+        audioUpload.addOnSuccessListener{ documentReference ->
+            mountainsRef.downloadUrl.addOnSuccessListener { uri ->
+                download_uri = uri.toString()
+                Log.d(TAG, download_uri!!) }
+            Log.d(TAG, "Ha caricato il file")
+        }
+        .addOnFailureListener { e ->
+            Log.w(TAG, "Error adding file", e)
+        }*/
+
+        val download_uri = "gs://geomotion-195dc.appspot.com/kill-bill.wav"
+        val gsReference = download_uri?.let { storage.getReferenceFromUrl(it) }
+
+        if (gsReference != null) {
+            gsReference.downloadUrl.addOnSuccessListener { uri ->
+                val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
+                mediaPlayer?.start()
+            }
+        }
+
         // Prompt the user for permission.
         getLocationPermission()
         // [START_EXCLUDE silent]
