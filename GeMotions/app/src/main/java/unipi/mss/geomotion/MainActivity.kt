@@ -16,6 +16,7 @@ package unipi.mss.geomotion
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.media.AudioFormat
@@ -36,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.github.squti.androidwaverecorder.WaveRecorder
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -51,6 +53,7 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.firebase.auth.FirebaseAuth
 import vokaturi.vokaturisdk.entities.Voice
 import java.io.DataInputStream
 import java.io.File
@@ -93,7 +96,43 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var isRecording = false
     private lateinit var waveRecorder: WaveRecorder
 
+    // Gestione login/logout
+    private lateinit var mGoogleSignInClient: GoogleSignInClient
+    private val mAuth = FirebaseAuth.getInstance()
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.logout -> {
+                Log.d(TAG, "Click on logout item")
+                logout()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun logout(){
+        mAuth.signOut()
+        if (::mGoogleSignInClient.isInitialized) {
+            mGoogleSignInClient.signOut().addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Logout success")
+                    val intent = Intent(this, LoginActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    Log.e(TAG, "Logout failed")
+                    Toast.makeText(this, "Logout failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            // Se mGoogleSignInClient non è stato inizializzato, avvia direttamente l'attività di accesso
+            Log.d(TAG, "Logout success")
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+    }
 
     // [START maps_current_place_on_create]
     @SuppressLint("ClickableViewAccessibility")

@@ -52,7 +52,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginTop="20sp">
+        android:layout_marginTop="25sp">
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

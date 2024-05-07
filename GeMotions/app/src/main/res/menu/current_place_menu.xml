@@ -11,15 +11,16 @@
      limitations under the License.
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/purple_transparent">
+    <!-- <item
         android:id="@+id/amici"
         android:title="@string/amici"
         app:showAsAction="always"/>
-
+    -->
     <item
         android:id="@+id/logout"
         android:title="@string/logout"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="always"/>
 
 </menu>
