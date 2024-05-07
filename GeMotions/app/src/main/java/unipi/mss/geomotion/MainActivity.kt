@@ -18,6 +18,7 @@ import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
@@ -50,7 +51,11 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.Circle
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -111,6 +116,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // Gestione login/logout
     private lateinit var mGoogleSignInClient: GoogleSignInClient
     private val mAuth = FirebaseAuth.getInstance()
+
+    private var chosenRadius = 100.0;
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
@@ -207,7 +214,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         if (gsReference != null) {
             gsReference.downloadUrl.addOnSuccessListener { uri ->
                 val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
-                mediaPlayer?.start()
+                //mediaPlayer?.start()
             }
         }
 
@@ -273,8 +280,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         slider.setLabelFormatter { value: Float ->
             "${value.toInt()} m"
         }
-
         slider.addOnChangeListener { rangeSlider, value, fromUser ->
+            chosenRadius = value.toDouble()
             Log.d(TAG, "Slider value is $value")
         }
 
@@ -444,6 +451,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //MARCO
 
         var currentMarker: Marker? = null
+        var currentCircle: Circle? = null
+
         map.setOnMapClickListener { latLng ->
             // Rimuovi il marker precedente se presente
             currentMarker?.remove()
@@ -461,14 +470,41 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 val addressString = address.thoroughfare ?: "Indirizzo non disponibile"
                 // Aggiungi un marker alla posizione toccata
                 val markerOptions = MarkerOptions().position(latLng).title(addressString).snippet("Emotion: HAPPY")
+                    .icon(defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)) // Set the icon for the marker
                 currentMarker = map.addMarker(markerOptions)
                 // Mostra le informazioni ottenute in un Toast
                 Toast.makeText(this, "Touched at: $placeName con indirizzo $addressString", Toast.LENGTH_SHORT).show()
                 currentMarker?.showInfoWindow()
             }
 
+            // Aggiungi il cerchio
+            currentCircle?.remove()
+            val circleOptions = CircleOptions()
+                .center(LatLng(latitude, longitude))
+                .radius(chosenRadius) // Imposta il raggio in metri
+                .strokeWidth(2f)
+                .strokeColor(R.color.purple_container_material_design_3)
+                .fillColor(Color.argb(70, 128, 0, 128) // Viola con un livello di opacità del 70%
+                ) // Opzionale: Imposta il colore di riempimento
+            currentCircle = map.addCircle(circleOptions)
+
         }
 
+        map.setOnInfoWindowClickListener { marker ->
+            // Crea un AlertDialog personalizzato
+            val builder = AlertDialog.Builder(this, R.style.RoundedAlertDialog)
+            builder.setTitle("Recordings")
+            builder.setMessage("Dettagli aggiuntivi: ${marker.snippet}")
+
+            // Aggiungi un pulsante per chiudere il popup
+            builder.setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss() // Chiudi il popup quando il pulsante viene premuto
+            }
+
+            // Mostra il dialogo
+            val dialog = builder.create()
+            dialog.show()
+        }
     }
 
 
