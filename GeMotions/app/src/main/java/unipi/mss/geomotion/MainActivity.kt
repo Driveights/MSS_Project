@@ -15,6 +15,7 @@ package unipi.mss.geomotion
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.location.Location
@@ -187,7 +188,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
 
 
-
                     model.close()
 
                     onButtonShowPopupWindowClick(recordButton.rootView, emotion)
@@ -332,11 +332,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Log.e(TAG,emotion)
 
-        val popupLayout: View =
-            LayoutInflater.from(this).inflate(R.layout.popup_window, null)
+        // Ottieni il riferimento alla TextView nel layout popup_window.xml
+        val emotionTextView = popupView.findViewById<TextView>(R.id.emotionText)
 
-        val emotionTextView = popupLayout.findViewById<TextView>(R.id.emotionText)
-
+        // Imposta il testo della TextView con l'emozione ricevuta
         emotionTextView.text = emotion
     }
 
