@@ -22,6 +22,22 @@
           }
         },
         {
+          "client_id": "193687748790-eh7vdt66im467taq3a1v2138nj2o8mvs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "unipi.mss.geomotion",
+            "certificate_hash": "debd0e92d1992c5f0e1f685dbaaf3276cf324ca7"
+          }
+        },
+        {
+          "client_id": "193687748790-oe1n1cn4ihgfilc1sppphhsfiet8oudv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "unipi.mss.geomotion",
+            "certificate_hash": "f421804133671c6861b9c6e6c9de2b868c567689"
+          }
+        },
+        {
           "client_id": "193687748790-j13cpdoa75iliam847soi6au4v3o9ci8.apps.googleusercontent.com",
           "client_type": 3
         }

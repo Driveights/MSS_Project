@@ -33,6 +33,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
@@ -227,7 +228,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     startRecording()
-                    # TODO check
                     recordButton.setBackgroundColor(R.color.purple_material_design_3)
                     recordButton.setImageResource(R.drawable.microphone_down)
                     recordButton.setBackgroundResource(R.drawable.round_button)
@@ -361,7 +361,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun onButtonShowPopupWindowClick(view: View?, emotion: String) {
 
-
+        /*
         // Inflate the layout of the popup window
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val popupView: View = inflater.inflate(R.layout.popup_window, null)
@@ -446,6 +446,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Imposta il testo della TextView con l'emozione ricevuta
         emotionTextView.text = emotion
+
+         */
     }
 
     // [END maps_current_place_on_create]
@@ -546,7 +548,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 .radius(chosenRadius) // Imposta il raggio in metri
                 .strokeWidth(2f)
                 .strokeColor(R.color.purple_container_material_design_3)
-                .fillColor(Color.argb(70, 128, 0, 128) // Viola con un livello di opacità del 70%
+                .fillColor(chooseColorRadius(recordingsResultDTO.getEmotion())// Viola con un livello di opacità del 70%
                 ) // Opzionale: Imposta il colore di riempimento
             currentCircle = map.addCircle(circleOptions)
 
@@ -576,6 +578,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+
+    private fun chooseColorRadius(emotion: String): Int {
+        if(emotion.equals("happy"))
+            return Color.argb(70, 128, 0, 128)
+        if(emotion.equals("neutral"))
+            return Color.argb(70, 128, 0, 128)
+        if(emotion.equals("surprise"))
+            return Color.argb(70, 128, 0, 128)
+        else (emotion.equals("unpleasant"))
+        return Color.argb(70, 128, 0, 128)
+    }
 
     /**
      * Gets the current location of the device, and positions the map's camera.
@@ -657,7 +670,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     permissionToRecordAccepted = true
                     // Avvia la registrazione se i permessi sono stati concessi
-                    startRecording()
+                    //startRecording()
                 } else {
                     // Gestisci il caso in cui i permessi non sono stati concessi
                     Toast.makeText(this, "Permessi di registrazione audio non concessi", Toast.LENGTH_SHORT).show()

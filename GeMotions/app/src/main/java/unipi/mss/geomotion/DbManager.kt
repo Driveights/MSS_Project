@@ -14,11 +14,10 @@ class DbManager {
 
         val recordingsResultDTO = RecordingsResultDTO()
         val emotionsCounter = hashMapOf(
-            "Neutralità" to 0,
-            "Felicità" to 0,
-            "Rabbia" to 0,
-            "Tristezza" to 0,
-            "Paura" to 0
+            "happy" to 0,
+            "neutral" to 0,
+            "surprise" to 0,
+            "unpleasant" to 0
         )
 
         val rapportoLat = radius / 111320 // Approssimazione del rapporto della differenza di latitudine
@@ -39,9 +38,10 @@ class DbManager {
                 for (document in result) {
                     Log.d(TAG, "${document.id} => ${document.data}")
                     val emotion = document.data["emotion"]
+                    Log.d(TAG,"Emozione del db $emotion")
                     val n = emotionsCounter[emotion] ?: 0
                     emotionsCounter[emotion.toString()] = n+1
-
+                    Log.d(TAG,"Emozione del db ${emotionsCounter[emotion.toString()]}")
                     val recordInfo = hashMapOf(
                         "email" to document.data["email"].toString(),
                         "audio" to document.data["audio"].toString()
@@ -52,10 +52,12 @@ class DbManager {
                 val maxEmotionEntry = emotionsCounter.maxByOrNull { it.value }
                 val maxEmotion = maxEmotionEntry?.key
                 recordingsResultDTO.setEmotion(maxEmotion.toString())
+                Log.d(TAG,"Emozione settata dopo il db 1 ${recordingsResultDTO.getEmotion()}")
             }
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Error getting documents.", exception)
             }
+
 
         return recordingsResultDTO
 
