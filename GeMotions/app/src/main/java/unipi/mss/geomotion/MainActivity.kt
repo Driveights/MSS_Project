@@ -36,12 +36,14 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.SeekBar
+import android.widget.Space
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -138,6 +140,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val dbManager = DbManager()
 
     private var chosenRadius = 100.0;
+    val storage = FirebaseStorage.getInstance()
+
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
@@ -178,7 +182,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         getPermissions()
 
-        val storage = FirebaseStorage.getInstance()
         var storageRef = storage.reference
         /*
         val mountainsRef = storageRef.child("kill-bill.wav")
@@ -197,11 +200,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val download_uri = "gs://geomotion-195dc.appspot.com/kill-bill.wav"
         val gsReference = download_uri?.let { storage.getReferenceFromUrl(it) }
 
-        if (gsReference != null) {
-            gsReference.downloadUrl.addOnSuccessListener { uri ->
-                val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
-                //mediaPlayer?.start()
-            }
+        gsReference?.downloadUrl?.addOnSuccessListener { uri ->
+            val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
+            //mediaPlayer?.start()
         }
 
         // Prompt the user for permission.
@@ -427,13 +428,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     private fun onButtonShowPopupWindowClick(view: View?, emotion: String) {
-
-
+        
         // Inflate the layout of the popup window
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val popupView: View = inflater.inflate(R.layout.popup_window, null)
-
-
 
         // Create the popup window
         val width = LinearLayout.LayoutParams.WRAP_CONTENT
@@ -462,6 +460,26 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 release()
             }
         }
+
+        makeItPlayable(popupView, mediaPlayer)
+
+        // Release MediaPlayer resources when popup is dismissed
+        popupWindow.setOnDismissListener {
+            mediaPlayer.release()
+        }
+
+        Log.e(TAG,emotion)
+
+        // Ottieni il riferimento alla TextView nel layout popup_window.xml
+        val emotionTextView = popupView.findViewById<TextView>(R.id.emotionText)
+
+        // Imposta il testo della TextView con l'emozione ricevuta
+        emotionTextView.text = emotion
+    }
+
+    private fun makeItPlayable(popupView: View, mediaPlayer: MediaPlayer){
+
+
         val playPauseButton = popupView.findViewById<ImageButton>(R.id.playPauseButton)
         val seekBar = popupView.findViewById<SeekBar>(R.id.seekBar)
         val durationTextView = popupView.findViewById<TextView>(R.id.durationTextView)
@@ -507,24 +525,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+
         })
-
-        // Release MediaPlayer resources when popup is dismissed
-        popupWindow.setOnDismissListener {
-            mediaPlayer.release()
-        }
-
-        Log.e(TAG,emotion)
-
-        // Ottieni il riferimento alla TextView nel layout popup_window.xml
-        val emotionTextView = popupView.findViewById<TextView>(R.id.emotionText)
-
-        // Imposta il testo della TextView con l'emozione ricevuta
-        emotionTextView.text = emotion
     }
-
-    // [END maps_current_place_on_create]
-
     /**
      * Saves the state of the map when the activity is paused.
      */
@@ -626,33 +629,44 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     currentMarker?.showInfoWindow()
 
                     map.setOnInfoWindowClickListener {
-                        builder.setTitle("RECORDINGS")
 
-                        // Creazione del layout personalizzato per il dialog
-                        val dialogLayout = layoutInflater.inflate(R.layout.custom_dialog_layout, null)
+                        val dialogLayout = layoutInflater.inflate(R.layout.custom_dialog_layout, null) as ViewGroup
+                        // Rimuovi tutti i figli presenti nel dialogLayout
+                        dialogLayout.removeAllViews()
+
+                        if(recordingsResultDTO.getlistOfRecordings().isEmpty())
+                            builder.setTitle("No Recordings :(")
+                        else
+                            builder.setTitle("RECORDINGS: ")
 
                         // Itera attraverso la lista di registrazioni
                         for (recording in recordingsResultDTO.getlistOfRecordings()) {
-                            for ((user, url) in recording) {
-                                Log.d(TAG,"Chiave: $user, Valore: $url")
-                            }                            // Infla il layout del player audio per ogni registrazione
+                            val userRecordLayout = layoutInflater.inflate(R.layout.user_record_layout, null)
 
+                            for ((key, value) in recording) {
+                                Log.d(TAG,"Chiave: $key, Valore: $value")
 
-                            /*val playerLayout = layoutInflater.inflate(R.layout.audio_player_layout, null)
+                                if (key == "email"){
+                                    val textViewTitle: TextView = userRecordLayout.findViewById(R.id.textViewTitle)
+                                    textViewTitle.text = value
+                                }
 
-                            // Trova le viste nel layout del player audio
-                            val textViewTitle: TextView = playerLayout.findViewById(R.id.textViewTitle)
-                            val seekBar: SeekBar = playerLayout.findViewById(R.id.seekBar)
-                            val buttonPlayPause: ImageButton = playerLayout.findViewById(R.id.buttonPlayPause)
-                            val buttonStop: ImageButton = playerLayout.findViewById(R.id.buttonStop)
+                                if (key == "audio"){
+                                    val gsReference = value.let { storage.getReferenceFromUrl(it) }
+                                    gsReference.downloadUrl.addOnSuccessListener { uri ->
+                                        val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
+                                        makeItPlayable(userRecordLayout, mediaPlayer)
+                                    }
+                                }
+                            }
 
-                            // Imposta il titolo del player audio
-                            textViewTitle.text = recording.keys
+                            dialogLayout.addView(userRecordLayout)
+                            // Aggiungi uno spazio bianco
+                            val space = Space(this@MainActivity)
+                            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, resources.getDimensionPixelSize(R.dimen.space_height)) // Imposta l'altezza dello spazio come desiderato
+                            dialogLayout.addView(space, params)
 
-                            // Aggiungi il layout del player audio al contenitore
-                            playersContainer.addView(playerLayout)*/
                         }
-
 
                         // Aggiungi un pulsante per chiudere il popup
                         builder.setPositiveButton("Chiudi") { dialog, _ ->
