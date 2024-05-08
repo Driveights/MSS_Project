@@ -7,18 +7,20 @@ import unipi.mss.geomotion.MainActivity.Companion.TAG
 import kotlin.math.cos
 
 class DbManager {
+    interface DbCallback {
+        fun onRecordingsResultReady(recordingsResultDTO: RecordingsResultDTO)
+    }
 
     val db = Firebase.firestore
 
-    fun getRecordings(lat: Double, long: Double, radius: Double):RecordingsResultDTO {
+    fun getRecordings(lat: Double, long: Double, radius: Double, callback: DbCallback):RecordingsResultDTO {
 
         val recordingsResultDTO = RecordingsResultDTO()
         val emotionsCounter = hashMapOf(
-            "Neutralità" to 0,
-            "Felicità" to 0,
-            "Rabbia" to 0,
-            "Tristezza" to 0,
-            "Paura" to 0
+            "happy" to 0,
+            "neutral" to 0,
+            "angry" to 0,
+            "unpleasant" to 0,
         )
 
         val rapportoLat = radius / 111320 // Approssimazione del rapporto della differenza di latitudine
@@ -54,12 +56,12 @@ class DbManager {
                 val maxEmotionEntry = emotionsCounter.maxByOrNull { it.value }
                 val maxEmotion = maxEmotionEntry?.key
                 recordingsResultDTO.setEmotion(maxEmotion.toString())
+                callback.onRecordingsResultReady(recordingsResultDTO)
+
             }
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Error getting documents.", exception)
             }
-        Log.d(TAG, recordingsResultDTO.getEmotion())
-
 
         return recordingsResultDTO
 

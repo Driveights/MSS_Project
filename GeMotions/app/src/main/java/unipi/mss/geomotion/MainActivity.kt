@@ -48,6 +48,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView
 import com.github.squti.androidwaverecorder.WaveRecorder
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -520,69 +521,91 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             // Ottieni le coordinate toccate
             val latitude = latLng.latitude
             val longitude = latLng.longitude
-
-            val db = Firebase.firestore
-            val recordingsResultDTO = dbManager.getRecordings(latitude,longitude,chosenRadius)
             // Ottieni il nome del luogo toccato utilizzando Geocoder
             val geocoder = Geocoder(this, Locale.getDefault())
-            val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1)!!
-            if (addresses.isNotEmpty()) {
-                val address = addresses[0]
-                val placeName = address.featureName ?: "Nome del luogo non disponibile"
-                val addressString = address.thoroughfare ?: "Indirizzo non disponibile"
-                // Aggiungi un marker alla posizione toccata
-                val markerOptions = MarkerOptions().position(latLng).title(addressString).snippet("Emotion: ${recordingsResultDTO.getEmotion()}")
-                    .icon(defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)) // Set the icon for the marker
-                currentMarker = map.addMarker(markerOptions)
-                // Mostra le informazioni ottenute in un Toast
-                Toast.makeText(this, "Touched at: $placeName con indirizzo $addressString", Toast.LENGTH_SHORT).show()
-                currentMarker?.showInfoWindow()
-            }
-
-
-            // Aggiungi il cerchio
-            currentCircle?.remove()
-            val circleOptions = CircleOptions()
-                .center(LatLng(latitude, longitude))
-                .radius(chosenRadius) // Imposta il raggio in metri
-                .strokeWidth(2f)
-                .strokeColor(R.color.white)
-                .fillColor(chooseColorRadius(recordingsResultDTO.getEmotion())) // Viola con un livello di opacità del 70%) // Opzionale: Imposta il colore di riempimento
-            currentCircle = map.addCircle(circleOptions)
-
-        }
-
-        map.setOnInfoWindowClickListener { marker ->
-            // Creazione del dialog personalizzato
             val builder = AlertDialog.Builder(this, R.style.RoundedAlertDialog)
-            builder.setTitle("RECORDINGS")
 
-            // Creazione del layout personalizzato per il dialog
-            val dialogLayout = layoutInflater.inflate(R.layout.custom_dialog_layout, null)
 
-            // Aggiungi il layout personalizzato al dialog
-            builder.setView(dialogLayout)
+            dbManager.getRecordings(latitude, longitude, chosenRadius, object : DbManager.DbCallback {
+                override fun onRecordingsResultReady(recordingsResultDTO: RecordingsResultDTO) {
+                    Log.d(TAG, recordingsResultDTO.getEmotion())
+                    val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1)!!
+                    if (addresses.isNotEmpty()) {
+                        val address = addresses[0]
+                        val addressString = address.thoroughfare ?: "Indirizzo non disponibile"
+                        // Aggiungi un marker alla posizione toccata
+                        val markerOptions = MarkerOptions().position(latLng).title(addressString).snippet("Emotion: ${recordingsResultDTO.getEmotion()}")
+                            .icon(defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)) // Set the icon for the marker
+                        currentMarker = map.addMarker(markerOptions)
+                        // Mostra le informazioni ottenute in un Toast
+                    }
 
-            // Aggiungi un pulsante per chiudere il popup
-            builder.setPositiveButton("Chiudi") { dialog, _ ->
-                dialog.dismiss() // Chiudi il popup quando il pulsante viene premuto
-            }
 
-            // Mostra il dialogo
-            val dialog = builder.create()
-            dialog.show()
+                    // Aggiungi il cerchio
+                    currentCircle?.remove()
+                    val circleOptions = CircleOptions()
+                        .center(LatLng(latitude, longitude))
+                        .radius(chosenRadius) // Imposta il raggio in metri
+                        .strokeWidth(2f)
+                        .strokeColor(R.color.white)
+                        .fillColor(chooseColorRadius(recordingsResultDTO.getEmotion())) // Viola con un livello di opacità del 70%) // Opzionale: Imposta il colore di riempimento
+                    currentCircle = map.addCircle(circleOptions)
+                    currentMarker?.showInfoWindow()
 
+                    map.setOnInfoWindowClickListener {
+                        builder.setTitle("RECORDINGS")
+
+                        // Creazione del layout personalizzato per il dialog
+                        val dialogLayout = layoutInflater.inflate(R.layout.custom_dialog_layout, null)
+
+                        // Itera attraverso la lista di registrazioni
+                        for (recording in recordingsResultDTO.getlistOfRecordings()) {
+                            for ((user, url) in recording) {
+                                Log.d(TAG,"Chiave: $user, Valore: $url")
+                            }                            // Infla il layout del player audio per ogni registrazione
+
+
+                            /*val playerLayout = layoutInflater.inflate(R.layout.audio_player_layout, null)
+
+                            // Trova le viste nel layout del player audio
+                            val textViewTitle: TextView = playerLayout.findViewById(R.id.textViewTitle)
+                            val seekBar: SeekBar = playerLayout.findViewById(R.id.seekBar)
+                            val buttonPlayPause: ImageButton = playerLayout.findViewById(R.id.buttonPlayPause)
+                            val buttonStop: ImageButton = playerLayout.findViewById(R.id.buttonStop)
+
+                            // Imposta il titolo del player audio
+                            textViewTitle.text = recording.keys
+
+                            // Aggiungi il layout del player audio al contenitore
+                            playersContainer.addView(playerLayout)*/
+                        }
+
+
+                        // Aggiungi un pulsante per chiudere il popup
+                        builder.setPositiveButton("Chiudi") { dialog, _ ->
+                            dialog.dismiss() // Chiudi il popup quando il pulsante viene premuto
+                        }
+
+                        // Aggiungi il layout personalizzato al dialog
+                        builder.setView(dialogLayout)
+
+                        // Mostra il dialogo
+                        val dialog = builder.create()
+                        dialog.show()
+
+                    }
+                }
+            })
         }
-
     }
 
     private fun chooseColorRadius(emotion: String): Int {
         return when (emotion) {
-            "happy" -> Color.argb(178, 0, 128, 0)   // Verde con 70% di opacità
-            "neutral" -> Color.argb(178, 128, 128, 128)   // Grigio con 70% di opacità
-            "surprise" -> Color.argb(178, 255, 255, 0)   // Giallo con 70% di opacità
-            "unpleasant" -> Color.argb(178, 255, 0, 0)   // Rosso con 70% di opacità
-            else -> Color.argb(70, 128, 0, 128)   // Ritorna il colore di default per le emozioni non riconosciute
+            "happy" -> Color.argb(128, 0, 128, 0)   // Verde con 50% di opacità
+            "neutral" -> Color.argb(128, 128, 128, 128)   // Grigio con 50% di opacità
+            "surprise" -> Color.argb(128, 255, 255, 0)   // Giallo con 50% di opacità
+            "unpleasant" -> Color.argb(128, 255, 0, 0)   // Rosso con 50% di opacità
+            else -> Color.argb(50, 128, 0, 128)   // Ritorna il colore di default per le emozioni non riconosciute con 20% di opacità
         }
     }
 

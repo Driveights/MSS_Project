@@ -8,6 +8,10 @@ class RecordingsResultDTO {
         return emotion
     }
 
+    fun getlistOfRecordings(): MutableList<HashMap<String, String>> {
+        return listOfRecordings
+    }
+
     fun setEmotion(emotion: String) {
         this.emotion = emotion
     }
