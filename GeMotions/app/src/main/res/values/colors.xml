@@ -28,4 +28,5 @@
     <color name="red">#FF0000</color>
     <color name="purple_material_design_3">?attr/colorPrimary</color>
     <color name="purple_container_material_design_3">?attr/colorPrimaryContainer</color>
+    <color name="transparent_primary">#CC3F51B5</color>
 </resources>

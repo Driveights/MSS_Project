@@ -1,3 +1,1 @@
-04-05:
-  - Integrated tarsosDSP lib to execute signal processing on the speech audio (MFCC).
-  - Integrated the .tflite model inside the project to perform inference.
+

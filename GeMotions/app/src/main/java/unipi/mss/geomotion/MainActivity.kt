@@ -15,6 +15,7 @@ package unipi.mss.geomotion
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -29,13 +30,17 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.Menu
-import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.PopupWindow
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -75,6 +80,12 @@ import java.io.FileInputStream
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
+import org.tensorflow.lite.DataType
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import unipi.mss.geomotion.ml.SerQuant
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 
 /**
@@ -112,6 +123,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var recorder: MediaRecorder? = null
     private var isRecording = false
     private lateinit var waveRecorder: WaveRecorder
+    private var mfccRecorder: MFCCRecorder = MFCCRecorder()
 
     // Gestione login/logout
     private lateinit var mGoogleSignInClient: GoogleSignInClient
@@ -156,7 +168,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // [START maps_current_place_on_create]
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -196,30 +207,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION)
             cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION)
         }
-        // [END maps_current_place_on_create_save_instance_state]
-        // [END_EXCLUDE]
 
-        // Retrieve the content view that renders the map.
+
         setContentView(R.layout.activity_main)
 
-        // [START_EXCLUDE silent]
-        // Construct a PlacesClient
         Places.initialize(applicationContext, BuildConfig.MAPS_API_KEY)
         placesClient = Places.createClient(this)
 
-        // Construct a FusedLocationProviderClient.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Build the map.
-        // [START maps_current_place_map_fragment]
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(this)
-        // [END maps_current_place_map_fragment]
-        // [END_EXCLUDE]
 
-        val filePath: String = externalCacheDir?.absolutePath + "/audioFile.wav"
-        waveRecorder = WaveRecorder(filePath)
 
 
         val recordButton = findViewById<ImageButton>(R.id.recordButton)
@@ -227,14 +227,69 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     startRecording()
+                    # TODO check
                     recordButton.setBackgroundColor(R.color.purple_material_design_3)
                     recordButton.setImageResource(R.drawable.microphone_down)
                     recordButton.setBackgroundResource(R.drawable.round_button)
+                    mfccRecorder.InitAudioDispatcher()
+                    mfccRecorder.startMfccExtraction()
                     true
                 }
 
                 MotionEvent.ACTION_UP -> {
                     stopRecording()
+                    mfccRecorder.StopAudioDispatcher()
+
+                    val model = SerQuant.newInstance(this)
+
+                    val mfccFeatures = mfccRecorder.getMfccList().transpose()
+                    val transposedMfccFeatures = ArrayList<FloatArray>().apply {
+                        if (mfccFeatures.isNotEmpty()) {
+                            val height = mfccFeatures[0].size
+                            val width = mfccFeatures.size
+                            for (i in 0 until height) {
+                                val newArray = FloatArray(width)
+                                for (j in mfccFeatures.indices) {
+                                    newArray[j] = mfccFeatures[j][i]
+                                }
+                                add(newArray)
+                            }
+                        }
+                    }
+                    val featureBuffer = floatArrayListToByteBuffer(transposedMfccFeatures)
+                    val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 47, 13), DataType.FLOAT32)
+                    inputFeature0.loadBuffer(adjustByteBuffer(featureBuffer))
+
+                    val outputs = model.process(inputFeature0)
+                    val outputFeature0 = outputs.outputFeature0AsTensorBuffer
+
+                    val maxValue = listOf(
+                        outputFeature0.getFloatValue(0) * 1,
+                        outputFeature0.getFloatValue(1) * 30000,
+                        outputFeature0.getFloatValue(2) * 40000,
+                        outputFeature0.getFloatValue(3) * 500
+                    ).maxOrNull()
+
+                    val maxIndex = listOf(
+                        outputFeature0.getFloatValue(0) * 1,
+                        outputFeature0.getFloatValue(1) * 30000,
+                        outputFeature0.getFloatValue(2) * 40000,
+                        outputFeature0.getFloatValue(3) * 500
+                    ).indexOf(maxValue)
+
+                    val emotion: String = when (maxIndex) {
+                        0 -> "Neutral"
+                        1 -> "Happy"
+                        2 -> "Surprise"
+                        3 -> "Unpleasant"
+                        else -> "Unknown"
+                    }
+
+
+                    model.close()
+
+                    onButtonShowPopupWindowClick(recordButton.rootView, emotion)
+
                     recordButton.setBackgroundColor(R.color.purple_container_material_design_3)
                     recordButton.setImageResource(R.drawable.microphone)
                     recordButton.setBackgroundResource(R.drawable.round_button)
@@ -263,98 +318,134 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+
     private fun startRecording() {
         Log.d(TAG, "Sto iniziando a registrare")
         if (permissionToRecordAccepted && !isRecording) {
-            // Avvio della registrazione con WaveRecorder
-            waveRecorder.waveConfig.sampleRate = 44100
-            waveRecorder.waveConfig.channels = AudioFormat.CHANNEL_IN_STEREO
-            waveRecorder.waveConfig.audioEncoding = AudioFormat.ENCODING_PCM_8BIT
-            waveRecorder.startRecording()
-            isRecording = true
-        }
-    }
+            recorder = MediaRecorder().apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.DEFAULT)
+                setOutputFile(externalCacheDir?.absolutePath + "/audioFile.mp3")
+                setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT)
 
-
-
-    // Funzione per interrompere la registrazione
-    private fun stopRecording() {
-        if (isRecording) {
-            // Interruzione della registrazione con WaveRecorder
-            Log.d(TAG, "Sto finendo di registrare")
-            waveRecorder.stopRecording()
-            isRecording = false
-        }
-
-        // Percorso del file audio .wav
-        val filePath: String = externalCacheDir?.absolutePath + "/audioFile.wav"
-
-        val floatArray = wavToFloatArray(filePath)
-        val voice = floatArray?.let { Voice(44100.0f, it.size) }
-        voice?.fill(floatArray)
-        val pr = voice?.extract()
-
-        if (pr != null) {
-            Log.d(TAG, "Validità: " + pr.isValid)
-        }
-        if (pr != null) {
-            // Ordinare le emozioni in ordine decrescente di valore
-            val emotions = listOf(
-                "Neutralità" to pr.neutrality,
-                "Felicità" to pr.happiness,
-                "Rabbia" to pr.anger,
-                "Tristezza" to pr.sadness,
-                "Paura" to pr.fear
-            ).sortedByDescending { it.second }
-
-            // Costruire la stringa delle informazioni in ordine decrescente
-            val emotionInfo = emotions.joinToString("\n") { "${it.first}: ${it.second}" }
-
-            // Stampare le informazioni utilizzando Toast
-            showToast(emotionInfo)
-        }
-    }
-
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun wavToFloatArray(filePath: String): FloatArray? {
-        val file = File(filePath)
-
-        // Verifica che il file esista
-        if (!file.exists()) {
-            return null
-        }
-
-        // Impostazioni per AudioRecord
-        val sampleRate = 44100
-        val channelConfig = AudioFormat.CHANNEL_IN_MONO
-        val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-        val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-
-        // Leggi i dati audio dal file WAV
-        val floatData = mutableListOf<Float>()
-        val inputStream = FileInputStream(file)
-        val dataInputStream = DataInputStream(inputStream)
-
-
-        // Leggi i dati audio e convertili in float
-        val data = ByteArray(bufferSize)
-        while (dataInputStream.available() > 0) {
-            val read = dataInputStream.read(data)
-            for (i in 0 until read / 2) { // Assuming 16-bit audio
-                val sample = (data[i * 2 + 1].toInt() shl 8) or (data[i * 2].toInt() and 0xFF)
-                floatData.add(sample.toFloat() / Short.MAX_VALUE) // Normalizza a [-1, 1]
+                try {
+                    prepare()
+                    start()
+                    isRecording = true
+                }
+                catch (e: IOException) {
+                    e.printStackTrace()
+                }
             }
         }
 
-        // Chiudi i flussi
-        dataInputStream.close()
-        inputStream.close()
+    }
 
-        // Converte i dati float in FloatArray
-        return floatData.toFloatArray()
+
+
+    private fun stopRecording() {
+        Log.d(TAG, "Ho finito registrare")
+        if (isRecording) {
+            try {
+                recorder?.stop()
+                recorder?.release()
+                isRecording = false
+
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+
+
+    private fun onButtonShowPopupWindowClick(view: View?, emotion: String) {
+
+
+        // Inflate the layout of the popup window
+        val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val popupView: View = inflater.inflate(R.layout.popup_window, null)
+
+        // Create the popup window
+        val width = LinearLayout.LayoutParams.WRAP_CONTENT
+        val height = LinearLayout.LayoutParams.WRAP_CONTENT
+        val focusable = true // Lets taps outside the popup also dismiss it
+        val popupWindow = PopupWindow(popupView, width, height, focusable)
+
+        // Show the popup window
+        // The view parameter is used as the anchor view for the popup
+        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
+
+        // Initialize and configure the audio player inside the popup
+
+        val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.mp3"
+        val mediaPlayer = MediaPlayer().apply {
+
+            setDataSource(filePath)
+            prepare()
+            setOnCompletionListener {
+                release()
+            }
+        }
+        val playPauseButton = popupView.findViewById<ImageButton>(R.id.playPauseButton)
+        val seekBar = popupView.findViewById<SeekBar>(R.id.seekBar)
+        val durationTextView = popupView.findViewById<TextView>(R.id.durationTextView)
+
+        // Set up play/pause functionality
+        playPauseButton.setOnClickListener {
+            if (mediaPlayer.isPlaying) {
+                mediaPlayer.pause()
+                playPauseButton.setImageResource(android.R.drawable.ic_media_play)
+            } else {
+                mediaPlayer.start()
+                playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
+            }
+        }
+
+        // Update seekBar progress and durationTextView
+        mediaPlayer.setOnPreparedListener {
+            seekBar.max = mediaPlayer.duration
+            val duration = mediaPlayer.duration
+            val minutes = duration / 1000 / 60
+            val seconds = duration / 1000 % 60
+            durationTextView.text = String.format("%02d:%02d", minutes, seconds)
+        }
+
+        mediaPlayer.setOnCompletionListener {
+            // Reset play/pause button when playback completes
+            playPauseButton.setImageResource(android.R.drawable.ic_media_play)
+        }
+
+        // Update seekBar progress during playback
+        mediaPlayer.setOnSeekCompleteListener {
+            seekBar.progress = mediaPlayer.currentPosition
+        }
+
+        // Update seekBar progress when user changes seekBar position
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    mediaPlayer.seekTo(progress)
+                }
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        // Release MediaPlayer resources when popup is dismissed
+        popupWindow.setOnDismissListener {
+            mediaPlayer.release()
+        }
+
+        Log.e(TAG,emotion)
+
+        // Ottieni il riferimento alla TextView nel layout popup_window.xml
+        val emotionTextView = popupView.findViewById<TextView>(R.id.emotionText)
+
+        // Imposta il testo della TextView con l'emozione ricevuta
+        emotionTextView.text = emotion
     }
 
     // [END maps_current_place_on_create]
@@ -725,6 +816,70 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Used for selecting the current place.
         private const val M_MAX_ENTRIES = 5
+    }
+
+    fun adjustByteBuffer(buffer: ByteBuffer): ByteBuffer {
+        val desiredSizeBytes = 2444
+
+        // Se il buffer è più piccolo, aggiungi zeri
+        if (buffer.capacity() < desiredSizeBytes) {
+            val zeroBuffer = ByteBuffer.allocateDirect(desiredSizeBytes)
+            zeroBuffer.order(ByteOrder.nativeOrder())
+            buffer.rewind()
+            zeroBuffer.put(buffer)
+            zeroBuffer.position(buffer.capacity()) // Imposta la posizione per aggiungere zeri alla fine
+            zeroBuffer.rewind()
+            return zeroBuffer
+        }
+        // Se il buffer è più grande, troncalo
+        else if (buffer.capacity() > desiredSizeBytes) {
+            buffer.limit(desiredSizeBytes) // Imposta il limite al nuovo numero di byte
+            buffer.rewind()
+            return buffer.slice() // Crea una vista del buffer troncato
+        }
+        // Altrimenti, restituisci il buffer originale
+        else {
+            buffer.rewind()
+            return buffer
+        }
+    }
+
+    fun floatArrayListToByteBuffer(floatArrayList: ArrayList<FloatArray>): ByteBuffer {
+        // Calculate total number of floats
+        var totalFloats = 0
+        for (floatArray in floatArrayList) {
+            totalFloats += floatArray.size
+        }
+
+        // Allocate direct ByteBuffer with native byte order
+        val bufferSize = totalFloats * Float.SIZE_BYTES
+        val byteBuffer = ByteBuffer.allocateDirect(bufferSize)
+        byteBuffer.order(ByteOrder.nativeOrder())
+
+        // Flatten the float arrays into the ByteBuffer
+        for (floatArray in floatArrayList) {
+            for (value in floatArray) {
+                byteBuffer.putFloat(value)
+            }
+        }
+
+        // Rewind the ByteBuffer to start position and return
+        byteBuffer.rewind()
+        return byteBuffer
+    }
+
+    fun List<FloatArray>.transpose(): List<FloatArray> {
+        if (isEmpty()) return emptyList()
+        val height = first().size
+        val width = size
+        val transposed = Array(height) { FloatArray(width) }
+        for (i in indices) {
+            val row = this[i]
+            for (j in row.indices) {
+                transposed[j][i] = row[j]
+            }
+        }
+        return transposed.toList()
     }
 }
 
