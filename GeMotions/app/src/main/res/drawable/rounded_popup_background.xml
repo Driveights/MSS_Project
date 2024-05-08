@@ -1,0 +1,5 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="12dp" /> <!-- Imposta il raggio dei bordi -->
+    <solid android:color="@color/purple_material_design_3" /> <!-- Imposta il colore di sfondo del pulsante -->
+</shape>

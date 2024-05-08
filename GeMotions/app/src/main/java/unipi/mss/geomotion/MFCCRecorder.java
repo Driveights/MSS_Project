@@ -44,7 +44,6 @@ public class MFCCRecorder {
         mfccList = new ArrayList<float[]>();
         // telling the dispatcher that we want to have the data coming from the device microphone
         dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(24000, 16000, 512);
-
     }
 
 
@@ -52,6 +51,7 @@ public class MFCCRecorder {
         float processedSeconds = dispatcher.secondsProcessed();
         Log.d(this.TAG, "Second of audio that have been processed:" + processedSeconds);
         dispatcher.stop();
+        normalizeFeatures(mfccList);
     }
 
 
@@ -97,5 +97,28 @@ public class MFCCRecorder {
         //its better to use thread vs asynctask here. ref : http://stackoverflow.com/a/18480297/1016544
         new Thread(dispatcher, "Audio Dispatcher").start();
 
+    }
+
+    public void normalizeFeatures(ArrayList<float[]> features) {
+        // Trova il massimo e il minimo valore tra tutte le feature
+        float maxVal = Float.MIN_VALUE;
+        float minVal = Float.MAX_VALUE;
+
+        for (float[] feature : features) {
+            for (float value : feature) {
+                maxVal = Math.max(maxVal, value);
+                minVal = Math.min(minVal, value);
+            }
+        }
+
+        // Calcola il range
+        float range = maxVal - minVal;
+
+        // Normalizza ogni feature tra -1 e 1
+        for (float[] feature : features) {
+            for (int i = 0; i < feature.length; i++) {
+                feature[i] = (feature[i] - minVal) / range * 2 - 1; // Normalizzazione tra -1 e 1
+            }
+        }
     }
 }
