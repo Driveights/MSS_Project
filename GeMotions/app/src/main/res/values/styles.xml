@@ -43,4 +43,9 @@
         <item name="android:background">@drawable/rounded_shape</item>
     </style>
 
+    <style name="RoundedAlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_background_rounded</item>
+    </style>
+
+
 </resources>

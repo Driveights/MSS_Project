@@ -42,6 +42,8 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.gridlayout:gridlayout:1.0.0'
+    implementation 'com.google.firebase:firebase-firestore-ktx:25.0.0'
+    implementation 'com.google.firebase:firebase-storage-ktx:21.0.0'
     androidTestImplementation('com.android.support.test.espresso:espresso-core:3.0.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
@@ -74,8 +76,8 @@ dependencies {
     implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever:1.0.14'
     implementation files("../OpenVokaturi-4-0-android.aar")
     implementation 'com.github.squti:Android-Wave-Recorder:1.7.0'
+    implementation("com.google.firebase:firebase-firestore")
     implementation files("libs/TarsosDSP-Android-2.0.jar")
-
 
 
 
