@@ -17,10 +17,17 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.location.Address
+import android.location.Geocoder
 import android.location.Location
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.MediaPlayer
 import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -41,6 +48,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.github.squti.androidwaverecorder.WaveRecorder
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -48,7 +56,11 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.Circle
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -56,6 +68,18 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.material.slider.Slider
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.firestore
+import com.google.firebase.storage.FirebaseStorage
+import vokaturi.vokaturisdk.entities.Voice
+import java.io.DataInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.text.NumberFormat
+import java.util.Currency
+import java.util.Locale
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import unipi.mss.geomotion.ml.SerQuant
@@ -101,12 +125,84 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var waveRecorder: WaveRecorder
     private var mfccRecorder: MFCCRecorder = MFCCRecorder()
 
+    // Gestione login/logout
+    private lateinit var mGoogleSignInClient: GoogleSignInClient
+    private val mAuth = FirebaseAuth.getInstance()
 
+    // Gestione db
+    private val dbManager = DbManager()
+
+    private var chosenRadius = 100.0;
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.logout -> {
+                Log.d(TAG, "Click on logout item")
+                logout()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun logout(){
+        mAuth.signOut()
+        if (::mGoogleSignInClient.isInitialized) {
+            mGoogleSignInClient.signOut().addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Logout success")
+                    val intent = Intent(this, LoginActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    Log.e(TAG, "Logout failed")
+                    Toast.makeText(this, "Logout failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            // Se mGoogleSignInClient non è stato inizializzato, avvia direttamente l'attività di accesso
+            Log.d(TAG, "Logout success")
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val storage = FirebaseStorage.getInstance()
+        var storageRef = storage.reference
+        /*
+        val mountainsRef = storageRef.child("kill-bill.wav")
+        val audioUpload = mountainsRef.putFile(Uri.fromFile(File("kill-bill.wav")))
+        var download_uri: String? = null
+        audioUpload.addOnSuccessListener{ documentReference ->
+            mountainsRef.downloadUrl.addOnSuccessListener { uri ->
+                download_uri = uri.toString()
+                Log.d(TAG, download_uri!!) }
+            Log.d(TAG, "Ha caricato il file")
+        }
+        .addOnFailureListener { e ->
+            Log.w(TAG, "Error adding file", e)
+        }*/
+
+        val download_uri = "gs://geomotion-195dc.appspot.com/kill-bill.wav"
+        val gsReference = download_uri?.let { storage.getReferenceFromUrl(it) }
+
+        if (gsReference != null) {
+            gsReference.downloadUrl.addOnSuccessListener { uri ->
+                val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
+                //mediaPlayer?.start()
+            }
+        }
+
+        // Prompt the user for permission.
+        getLocationPermission()
+        // [START_EXCLUDE silent]
+        // Retrieve location and camera position from saved instance state.
+        // [START maps_current_place_on_create_save_instance_state]
         if (savedInstanceState != null) {
             lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION)
             cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION)
@@ -126,15 +222,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
 
-        val recordButton = findViewById<Button>(R.id.recordButton)
-
+        val recordButton = findViewById<ImageButton>(R.id.recordButton)
         recordButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     startRecording()
+                    # TODO check
+                    recordButton.setBackgroundColor(R.color.purple_material_design_3)
+                    recordButton.setImageResource(R.drawable.microphone_down)
+                    recordButton.setBackgroundResource(R.drawable.round_button)
                     mfccRecorder.InitAudioDispatcher()
                     mfccRecorder.startMfccExtraction()
-                    recordButton.setBackgroundResource(R.drawable.button_recording_active)
                     true
                 }
 
@@ -192,12 +290,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     onButtonShowPopupWindowClick(recordButton.rootView, emotion)
 
-                    recordButton.setBackgroundResource(R.drawable.button_recording_inactive)
+                    recordButton.setBackgroundColor(R.color.purple_container_material_design_3)
+                    recordButton.setImageResource(R.drawable.microphone)
+                    recordButton.setBackgroundResource(R.drawable.round_button)
                     true
                 }
 
                 else -> false
             }
+        }
+
+        val slider = findViewById<Slider>(R.id.slider)
+        slider.setLabelFormatter { value: Float ->
+            "${value.toInt()} m"
+        }
+        slider.addOnChangeListener { rangeSlider, value, fromUser ->
+            chosenRadius = value.toDouble()
+            Log.d(TAG, "Slider value is $value")
         }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -373,8 +482,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(map: GoogleMap) {
         this.map = map
 
-        // [START_EXCLUDE]
-        // [START map_current_place_set_info_window_adapter]
         // Use a custom info window adapter to handle multiple lines of text in the
         // info window contents.
         this.map?.setInfoWindowAdapter(object : InfoWindowAdapter {
@@ -394,19 +501,81 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 return infoWindow
             }
         })
-        // [END map_current_place_set_info_window_adapter]
 
-        // Prompt the user for permission.
-        getLocationPermission()
-        // [END_EXCLUDE]
+        // Get the current location of the device and set the position of the map.
+        getDeviceLocation()
 
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI()
 
-        // Get the current location of the device and set the position of the map.
-        getDeviceLocation()
+        //MARCO
+        var currentMarker: Marker? = null
+        var currentCircle: Circle? = null
+
+        map.setOnMapClickListener { latLng ->
+            // Rimuovi il marker precedente se presente
+            currentMarker?.remove()
+
+            // Ottieni le coordinate toccate
+            val latitude = latLng.latitude
+            val longitude = latLng.longitude
+
+            val db = Firebase.firestore
+            val recordingsResultDTO = dbManager.getRecordings(latitude,longitude,chosenRadius)
+
+            // Ottieni il nome del luogo toccato utilizzando Geocoder
+            val geocoder = Geocoder(this, Locale.getDefault())
+            val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1)!!
+            if (addresses.isNotEmpty()) {
+                val address = addresses[0]
+                val placeName = address.featureName ?: "Nome del luogo non disponibile"
+                val addressString = address.thoroughfare ?: "Indirizzo non disponibile"
+                // Aggiungi un marker alla posizione toccata
+                val markerOptions = MarkerOptions().position(latLng).title(addressString).snippet("Emotion: ${recordingsResultDTO.getEmotion()}")
+                    .icon(defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)) // Set the icon for the marker
+                currentMarker = map.addMarker(markerOptions)
+                // Mostra le informazioni ottenute in un Toast
+                Toast.makeText(this, "Touched at: $placeName con indirizzo $addressString", Toast.LENGTH_SHORT).show()
+                currentMarker?.showInfoWindow()
+            }
+
+            // Aggiungi il cerchio
+            currentCircle?.remove()
+            val circleOptions = CircleOptions()
+                .center(LatLng(latitude, longitude))
+                .radius(chosenRadius) // Imposta il raggio in metri
+                .strokeWidth(2f)
+                .strokeColor(R.color.purple_container_material_design_3)
+                .fillColor(Color.argb(70, 128, 0, 128) // Viola con un livello di opacità del 70%
+                ) // Opzionale: Imposta il colore di riempimento
+            currentCircle = map.addCircle(circleOptions)
+
+        }
+
+        map.setOnInfoWindowClickListener { marker ->
+            // Creazione del dialog personalizzato
+            val builder = AlertDialog.Builder(this, R.style.RoundedAlertDialog)
+            builder.setTitle("RECORDINGS")
+
+            // Creazione del layout personalizzato per il dialog
+            val dialogLayout = layoutInflater.inflate(R.layout.custom_dialog_layout, null)
+
+            // Aggiungi il layout personalizzato al dialog
+            builder.setView(dialogLayout)
+
+            // Aggiungi un pulsante per chiudere il popup
+            builder.setPositiveButton("Chiudi") { dialog, _ ->
+                dialog.dismiss() // Chiudi il popup quando il pulsante viene premuto
+            }
+
+            // Mostra il dialogo
+            val dialog = builder.create()
+            dialog.show()
+
+        }
+
     }
-    // [END maps_current_place_on_map_ready]
+
 
     /**
      * Gets the current location of the device, and positions the map's camera.
@@ -635,7 +804,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // [END maps_current_place_update_location_ui]
 
     companion object {
-        private val TAG = MainActivity::class.java.simpleName
+        internal val TAG = MainActivity::class.java.simpleName
         private const val DEFAULT_ZOOM = 15
         private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 

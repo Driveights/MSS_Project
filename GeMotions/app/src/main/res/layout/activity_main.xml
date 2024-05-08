@@ -27,27 +27,28 @@
         android:layout_height="match_parent"
         tools:context=".MainActivity" />
 
-    <Button
+    <ImageButton
         android:id="@+id/recordButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="42sp"
+        android:layout_height="42sp"
         android:layout_gravity="bottom|right"
         android:layout_margin="32dp"
-        android:text="Rec"
+        android:background="@drawable/round_button"
+        android:src="@drawable/microphone_down"
         android:textColor="#FFFFFF"
-        style="@style/AppTheme.RoundedCornerMaterialButton"
         tools:ignore="RtlHardcoded" />
 
-    <Button
-        android:id="@+id/emotionButton"
-        android:layout_width="wrap_content"
+    <com.google.android.material.slider.Slider
+        android:id="@+id/slider"
+        android:layout_width="165sp"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|left"
+        android:stepSize="50.0"
+        android:value="100.0"
+        android:valueFrom="50.0"
+        android:valueTo="250.0"
+        android:layout_gravity="bottom|start"
         android:layout_margin="32dp"
-        android:text="Emoji"
-        android:textColor="#FFFFFF"
-        style="@style/AppTheme.RoundedCornerMaterialButton"
-        tools:ignore="RtlHardcoded" />
+        />
 
 </FrameLayout>
 
