@@ -41,11 +41,13 @@ class DbManager {
                     val emotion = document.data["emotion"]
                     val n = emotionsCounter[emotion] ?: 0
                     emotionsCounter[emotion.toString()] = n+1
-
+                    Log.d(TAG, emotion.toString())
                     val recordInfo = hashMapOf(
                         "email" to document.data["email"].toString(),
                         "audio" to document.data["audio"].toString()
                     )
+                    Log.d(TAG,document.data["email"].toString())
+
                     recordingsResultDTO.addRecording(recordInfo)
                 }
                 // set the dominant emotion
@@ -56,6 +58,8 @@ class DbManager {
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Error getting documents.", exception)
             }
+        Log.d(TAG, recordingsResultDTO.getEmotion())
+
 
         return recordingsResultDTO
 

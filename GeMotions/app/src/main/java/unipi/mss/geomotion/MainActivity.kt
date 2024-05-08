@@ -33,6 +33,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
@@ -227,7 +228,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     startRecording()
-                    # TODO check
+                    // TODO check
                     recordButton.setBackgroundColor(R.color.purple_material_design_3)
                     recordButton.setImageResource(R.drawable.microphone_down)
                     recordButton.setBackgroundResource(R.drawable.round_button)
@@ -522,7 +523,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
             val db = Firebase.firestore
             val recordingsResultDTO = dbManager.getRecordings(latitude,longitude,chosenRadius)
-
             // Ottieni il nome del luogo toccato utilizzando Geocoder
             val geocoder = Geocoder(this, Locale.getDefault())
             val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1)!!
@@ -539,15 +539,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 currentMarker?.showInfoWindow()
             }
 
+
             // Aggiungi il cerchio
             currentCircle?.remove()
             val circleOptions = CircleOptions()
                 .center(LatLng(latitude, longitude))
                 .radius(chosenRadius) // Imposta il raggio in metri
                 .strokeWidth(2f)
-                .strokeColor(R.color.purple_container_material_design_3)
-                .fillColor(Color.argb(70, 128, 0, 128) // Viola con un livello di opacità del 70%
-                ) // Opzionale: Imposta il colore di riempimento
+                .strokeColor(R.color.white)
+                .fillColor(chooseColorRadius(recordingsResultDTO.getEmotion())) // Viola con un livello di opacità del 70%) // Opzionale: Imposta il colore di riempimento
             currentCircle = map.addCircle(circleOptions)
 
         }
@@ -575,6 +575,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
     }
+
+    private fun chooseColorRadius(emotion: String): Int {
+        return when (emotion) {
+            "happy" -> Color.argb(178, 0, 128, 0)   // Verde con 70% di opacità
+            "neutral" -> Color.argb(178, 128, 128, 128)   // Grigio con 70% di opacità
+            "surprise" -> Color.argb(178, 255, 255, 0)   // Giallo con 70% di opacità
+            "unpleasant" -> Color.argb(178, 255, 0, 0)   // Rosso con 70% di opacità
+            else -> Color.argb(70, 128, 0, 128)   // Ritorna il colore di default per le emozioni non riconosciute
+        }
+    }
+
 
 
     /**
