@@ -29,8 +29,8 @@
 
     <ImageButton
         android:id="@+id/recordButton"
-        android:layout_width="42sp"
-        android:layout_height="42sp"
+        android:layout_width="62sp"
+        android:layout_height="62sp"
         android:layout_gravity="bottom|right"
         android:layout_margin="32dp"
         android:background="@drawable/round_button"
