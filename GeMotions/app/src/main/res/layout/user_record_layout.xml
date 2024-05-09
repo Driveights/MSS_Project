@@ -59,17 +59,16 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="1dp"
         android:gravity="center"
         android:orientation="horizontal"
-        android:layout_marginTop="5dp">
+        android:layout_marginTop="1dp">
         <TextView
             android:id="@+id/emotionText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="HAPPY"
             android:textColor="#FFFFFF"
-            android:textSize="13sp"
+            android:textSize="25sp"
             android:textStyle="bold"
             android:padding="5dp"
             android:visibility="visible"/>

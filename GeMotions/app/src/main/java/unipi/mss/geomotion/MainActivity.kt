@@ -6,7 +6,10 @@ import android.animation.PropertyValuesHolder
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
@@ -46,7 +49,6 @@ import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.CircleOptions
@@ -332,7 +334,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-
     private fun onButtonShowPopupWindowClick(view: View?, emotion: String) {
         
         // Inflate the layout of the popup window
@@ -378,7 +379,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val emotionTextView = popupView.findViewById<TextView>(R.id.emotionText)
 
         // Imposta il testo della TextView con l'emozione ricevuta
-        emotionTextView.text = emotion
+        emotionTextView.text = emojiText(emotion)
         val sendButton = popupView.findViewById<Button>(R.id.sendButton)
 
 
@@ -387,9 +388,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             val storage = FirebaseStorage.getInstance()
             // Get a reference to the root of your Firebase Storage bucket
             val storageRef = storage.reference
-
-            // Generate a unique ID for the audio file
-            val audioUUID = UUID.randomUUID()
 
             // Path to the audio file saved in the cache directory
             val audioFilePath = externalCacheDir!!.absolutePath + "/audioFile.m4a"
@@ -551,20 +549,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             // Ottieni il nome del luogo toccato utilizzando Geocoder
             val geocoder = Geocoder(this, Locale.getDefault())
             val builder = AlertDialog.Builder(this, R.style.RoundedAlertDialog)
-            builder.setView(ScrollView(this))
-
-
+            val scrollView = ScrollView(this).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            }
 
             dbManager.getRecordings(latitude, longitude, chosenRadius, object : DbManager.DbCallback {
                 override fun onRecordingsResultReady(recordingsResultDTO: RecordingsResultDTO) {
-                    Log.d(TAG, recordingsResultDTO.getEmotion())
                     val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1)!!
                     if (addresses.isNotEmpty()) {
                         val address = addresses[0]
                         val addressString = address.thoroughfare ?: "Indirizzo non disponibile"
                         // Aggiungi un marker alla posizione toccata
-                        val markerOptions = MarkerOptions().position(latLng).title(addressString).snippet("Emotion: ${recordingsResultDTO.getEmotion()}")
-                            .icon(defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)) // Set the icon for the marker
+                        val markerOptions = markerCustomed(recordingsResultDTO.getEmotion(), addressString, latLng)
                         currentMarker = map.addMarker(markerOptions)
                         // Mostra le informazioni ottenute in un Toast
                     }
@@ -586,64 +585,35 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         val dialogLayout = layoutInflater.inflate(R.layout.custom_dialog_layout, null) as ViewGroup
                         // Rimuovi tutti i figli presenti nel dialogLayout
                         dialogLayout.removeAllViews()
+                        scrollView.removeAllViews()
+
+                        val parentViewGroup = scrollView.parent as? ViewGroup
+                        parentViewGroup?.removeView(scrollView)
 
                         if(recordingsResultDTO.getlistOfRecordings().isEmpty())
                             builder.setTitle("No Recordings :(")
                         else
                             builder.setTitle("RECORDINGS: ")
 
-                        var counter = 4
-                        // Itera attraverso la lista di registrazioni
-                        for (recording in recordingsResultDTO.getlistOfRecordings()) {
-                            val userRecordLayout = layoutInflater.inflate(R.layout.user_record_layout, null)
-
-                            for ((key, value) in recording) {
-                                Log.d(TAG,"Chiave: $key, Valore: $value")
-
-                                if (key == "email"){
-                                    val textViewTitle: TextView = userRecordLayout.findViewById(R.id.textViewTitle)
-                                    textViewTitle.text = value
-                                }
-
-                                if (key == "emotion"){
-                                    val textViewTitle: TextView = userRecordLayout.findViewById(R.id.emotionText)
-                                    textViewTitle.text = value
-                                }
-
-                                if (key == "audio"){
-                                    val gsReference = value.let { storage.getReferenceFromUrl(it) }
-                                    gsReference.downloadUrl.addOnSuccessListener { uri ->
-                                        val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
-                                        makeItPlayable(userRecordLayout, mediaPlayer)
-                                    }
-                                }
-                            }
-
-                            dialogLayout.addView(userRecordLayout)
-                            // Aggiungi uno spazio bianco
-                            val space = Space(this@MainActivity)
-                            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, resources.getDimensionPixelSize(R.dimen.space_height)) // Imposta l'altezza dello spazio come desiderato
-                            dialogLayout.addView(space, params)
-                            counter -= 1
-                            if (counter == 0){
-                                dialogLayout.addView(layoutInflater.inflate(R.layout.button_load_more, null))
-                                break
-                            }
-                        }
+                        val iterator = recordingsResultDTO.getlistOfRecordings().iterator()
+                        addRecordingToLayout(dialogLayout, iterator)
 
                         // Aggiungi un pulsante per chiudere il popup
                         builder.setPositiveButton("Chiudi") { dialog, _ ->
                             dialog.dismiss() // Chiudi il popup quando il pulsante viene premuto
                         }
 
+                        scrollView.addView(dialogLayout) // Aggiungi il dialogLayout come unico figlio diretto dello ScrollView
+
                         // Aggiungi il layout personalizzato al dialog
-                        builder.setView(dialogLayout)
+                        builder.setView(scrollView)
 
                         // Mostra il dialogo
                         val dialog = builder.create()
                         dialog.show()
 
                     }
+
                 }
             })
         }
@@ -651,14 +621,102 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun chooseColorRadius(emotion: String): Int {
         return when (emotion) {
-            "happy" -> Color.argb(128, 0, 128, 0)   // Verde con 50% di opacità
-            "neutral" -> Color.argb(128, 128, 128, 128)   // Grigio con 50% di opacità
-            "surprise" -> Color.argb(128, 255, 255, 0)   // Giallo con 50% di opacità
-            "unpleasant" -> Color.argb(128, 255, 0, 0)   // Rosso con 50% di opacità
+            "Happy" -> Color.argb(128, 0, 128, 0)   // Verde con 50% di opacità
+            "Neutral" -> Color.argb(128, 128, 128, 128)   // Grigio con 50% di opacità
+            "Surprise" -> Color.argb(128, 255, 255, 0)   // Giallo con 50% di opacità
+            "Unpleasant" -> Color.argb(128, 255, 0, 0)   // Rosso con 50% di opacità
             else -> Color.argb(50, 128, 0, 128)   // Ritorna il colore di default per le emozioni non riconosciute con 20% di opacità
         }
     }
 
+    private fun emojiText(emotion: String): String {
+        return when (emotion) {
+            "Happy" -> "😄"
+            "Neutral" -> "\uD83D\uDE11"  // Grigio con 50% di opacità
+            "Surprise" -> "\uD83D\uDE32"  // Giallo con 50% di opacità
+            "Unpleasant" -> "\uD83D\uDE1E"
+            else -> "❓"
+        }
+    }
+
+
+    private fun markerCustomed(emotion: String, addressString: String, latLng: LatLng): MarkerOptions {
+        val text = emojiText(emotion)
+        val textSize = 100f // dimensione del testo in pixel
+        val padding = 1 // spazio intorno al testo in pixel
+
+        // Calcola le dimensioni dell'icona
+        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        textPaint.textSize = textSize
+        val textWidth = textPaint.measureText(text)
+        val textHeight = textPaint.descent() - textPaint.ascent()
+        val bitmapWidth = textWidth.toInt() + 2 * padding
+        val bitmapHeight = textHeight.toInt() + 2 * padding
+
+        // Crea un'immagine bitmap vuota
+        val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        canvas.drawText(text, padding.toFloat(), (bitmapHeight / 2 - (textPaint.descent() + textPaint.ascent()) / 2) + padding, textPaint)
+
+        // Imposta l'icona del marker
+        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
+        val markerOptions = MarkerOptions()
+            .position(latLng)
+            .title(addressString)
+            .snippet("Emotion: ${emotion}")
+            .icon(icon)
+        return markerOptions
+    }
+
+    private fun addRecordingToLayout(dialogLayout: ViewGroup, iterator: MutableIterator<HashMap<String, String>>){
+        var counter = 3
+        // Itera attraverso la lista di registrazioni
+        while (iterator.hasNext()) {
+            val recording = iterator.next()
+            val userRecordLayout = layoutInflater.inflate(R.layout.user_record_layout, null)
+
+            for ((key, value) in recording) {
+                Log.d(TAG,"Chiave: $key, Valore: $value")
+
+                if (key == "email"){
+                    val textViewTitle: TextView = userRecordLayout.findViewById(R.id.textViewTitle)
+                    textViewTitle.text = value
+                }
+
+                if (key == "emotion"){
+                    val textViewTitle: TextView = userRecordLayout.findViewById(R.id.emotionText)
+                    textViewTitle.text = emojiText(value)
+                }
+
+                if (key == "audio"){
+                    val gsReference = value.let { storage.getReferenceFromUrl(it) }
+                    gsReference.downloadUrl.addOnSuccessListener { uri ->
+                        val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
+                        makeItPlayable(userRecordLayout, mediaPlayer)
+                    }
+                }
+
+            }
+
+            dialogLayout.addView(userRecordLayout)
+            // Aggiungi uno spazio bianco
+            val space = Space(this@MainActivity)
+            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, resources.getDimensionPixelSize(R.dimen.space_height)) // Imposta l'altezza dello spazio come desiderato
+            dialogLayout.addView(space, params)
+            counter -= 1
+            if (counter == 0){
+                val buttonLoadMore = layoutInflater.inflate(R.layout.button_load_more, null)
+                buttonLoadMore.findViewById<Button>(R.id.buttonLoadMore).setOnClickListener {
+                    addRecordingToLayout(dialogLayout, iterator)
+                    dialogLayout.removeView(buttonLoadMore)
+
+                }
+                dialogLayout.addView(buttonLoadMore)
+                break
+            }
+        }
+    }
 
 
     /**

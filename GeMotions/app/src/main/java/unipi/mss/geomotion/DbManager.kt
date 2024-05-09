@@ -52,7 +52,7 @@ class DbManager {
                         "emotion" to document.data["emotion"].toString()
                     )
                     Log.d(TAG,document.data["email"].toString())
-
+                    
                     recordingsResultDTO.addRecording(recordInfo)
                 }
                 // set the dominant emotion
