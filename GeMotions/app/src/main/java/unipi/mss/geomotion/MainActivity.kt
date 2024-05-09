@@ -1,24 +1,9 @@
-// Copyright 2020 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 package unipi.mss.geomotion
 
 import android.Manifest
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -51,9 +36,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.RecyclerView
 import com.github.squti.androidwaverecorder.WaveRecorder
-import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -71,20 +54,11 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.slider.Slider
-import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.FirebaseStorage
-import vokaturi.vokaturisdk.entities.Voice
-import java.io.DataInputStream
 import java.io.File
-import java.io.FileInputStream
-import java.text.NumberFormat
-import java.util.Currency
 import java.util.Locale
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
@@ -121,7 +95,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // Gestione audio bottone
     private val REQUEST_LOCATION_PERMISSION = 100
     private val REQUEST_RECORD_AUDIO_PERMISSION = 200
-    private val PERMISSIONS_REQUEST_ALL = 1001
 
     private val permissions = arrayOf(
         Manifest.permission.RECORD_AUDIO,
@@ -183,42 +156,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     @SuppressLint("ClickableViewAccessibility", "ResourceAsColor")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        getPermissions()
-
-        var storageRef = storage.reference
-        /*
-        val mountainsRef = storageRef.child("kill-bill.wav")
-        val audioUpload = mountainsRef.putFile(Uri.fromFile(File("kill-bill.wav")))
-        var download_uri: String? = null
-        audioUpload.addOnSuccessListener{ documentReference ->
-            mountainsRef.downloadUrl.addOnSuccessListener { uri ->
-                download_uri = uri.toString()
-                Log.d(TAG, download_uri!!) }
-            Log.d(TAG, "Ha caricato il file")
-        }
-        .addOnFailureListener { e ->
-            Log.w(TAG, "Error adding file", e)
-        }*/
-
+        getLocationPermission()
         // Prompt the user for permission.
-
         if (savedInstanceState != null) {
             lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION)
             cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION)
         }
 
-        if (locationPermissionGranted)
-            setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_main)
 
         Places.initialize(applicationContext, BuildConfig.MAPS_API_KEY)
         placesClient = Places.createClient(this)
-
 
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(this)
 
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+        if(locationPermissionGranted)
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
 
         val recordButton = findViewById<ImageButton>(R.id.recordButton)
@@ -240,72 +195,85 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         recordButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    getRecordPermission()
                     scaleDown.start()
-                    startRecording()
-                    recordButton.setBackgroundColor(R.color.purple_material_design_3)
-                    recordButton.setBackgroundResource(R.drawable.round_button)
-                    mfccRecorder.InitAudioDispatcher()
-                    mfccRecorder.startMfccExtraction()
+                    if (!permissionToRecordAccepted ){
+                        Toast.makeText(this, "You must give permission to use microphone",Toast.LENGTH_LONG).show()
+                    }else if( !locationPermissionGranted){
+                        Toast.makeText(this, "You must give permission to use your location",Toast.LENGTH_LONG).show()
+                    }else {     // ho entrambi i permessi
+                        startRecording()
+                        recordButton.setBackgroundColor(R.color.purple_material_design_3)
+                        recordButton.setBackgroundResource(R.drawable.round_button)
+                        mfccRecorder.InitAudioDispatcher()
+                        mfccRecorder.startMfccExtraction()
+                    }
                     true
                 }
 
                 MotionEvent.ACTION_UP -> {
+                    getRecordPermission()
                     scaleUp.start()
-                    mfccRecorder.StopAudioDispatcher()
-                    stopRecording()
+                    if (!permissionToRecordAccepted ){
+                        Toast.makeText(this, "You must give permission to use microphone",Toast.LENGTH_LONG).show()
+                    }else if( !locationPermissionGranted){
+                        Toast.makeText(this, "You must give permission to use your location",Toast.LENGTH_LONG).show()
+                    }else {
+                        mfccRecorder.StopAudioDispatcher()
+                        stopRecording()
 
-                    val model = SerQuant.newInstance(this)
+                        val model = SerQuant.newInstance(this)
 
-                    val mfccFeatures = mfccRecorder.getMfccList().transpose()
-                    val transposedMfccFeatures = ArrayList<FloatArray>().apply {
-                        if (mfccFeatures.isNotEmpty()) {
-                            val height = mfccFeatures[0].size
-                            val width = mfccFeatures.size
-                            for (i in 0 until height) {
-                                val newArray = FloatArray(width)
-                                for (j in mfccFeatures.indices) {
-                                    newArray[j] = mfccFeatures[j][i]
+                        val mfccFeatures = mfccRecorder.getMfccList().transpose()
+                        val transposedMfccFeatures = ArrayList<FloatArray>().apply {
+                            if (mfccFeatures.isNotEmpty()) {
+                                val height = mfccFeatures[0].size
+                                val width = mfccFeatures.size
+                                for (i in 0 until height) {
+                                    val newArray = FloatArray(width)
+                                    for (j in mfccFeatures.indices) {
+                                        newArray[j] = mfccFeatures[j][i]
+                                    }
+                                    add(newArray)
                                 }
-                                add(newArray)
                             }
                         }
+                        val featureBuffer = floatArrayListToByteBuffer(transposedMfccFeatures)
+                        val inputFeature0 =
+                            TensorBuffer.createFixedSize(intArrayOf(1, 47, 13), DataType.FLOAT32)
+                        inputFeature0.loadBuffer(adjustByteBuffer(featureBuffer))
+
+                        val outputs = model.process(inputFeature0)
+                        val outputFeature0 = outputs.outputFeature0AsTensorBuffer
+
+                        // Calcola i valori moltiplicati e visualizzali nel log come errore
+                        val multipliedFeatures = listOf(
+                            outputFeature0.getFloatValue(0),
+                            outputFeature0.getFloatValue(1),
+                            outputFeature0.getFloatValue(2),
+                            outputFeature0.getFloatValue(3)
+                        )
+
+                        Log.e(TAG, mfccFeatures[0].toString())
+
+                        Log.e(TAG, "Valori moltiplicati: $multipliedFeatures")
+
+                        // Trova il valore massimo e il suo indice
+                        val maxValue = multipliedFeatures.maxOrNull()
+                        val maxIndex = multipliedFeatures.indexOf(maxValue)
+
+                        val emotion: String = when (maxIndex) {
+                            0 -> "Neutral"
+                            1 -> "Happy"
+                            2 -> "Surprise"
+                            3 -> "Unpleasant"
+                            else -> "Unknown"
+                        }
+                        model.close()
+
+
+                        onButtonShowPopupWindowClick(recordButton.rootView, emotion)
                     }
-                    val featureBuffer = floatArrayListToByteBuffer(transposedMfccFeatures)
-                    val inputFeature0 =
-                        TensorBuffer.createFixedSize(intArrayOf(1, 47, 13), DataType.FLOAT32)
-                    inputFeature0.loadBuffer(adjustByteBuffer(featureBuffer))
-
-                    val outputs = model.process(inputFeature0)
-                    val outputFeature0 = outputs.outputFeature0AsTensorBuffer
-
-                    // Calcola i valori moltiplicati e visualizzali nel log come errore
-                    val multipliedFeatures = listOf(
-                        outputFeature0.getFloatValue(0),
-                        outputFeature0.getFloatValue(1),
-                        outputFeature0.getFloatValue(2),
-                        outputFeature0.getFloatValue(3)
-                    )
-
-                    Log.e(TAG, mfccFeatures[0].toString())
-
-                    Log.e(TAG, "Valori moltiplicati: $multipliedFeatures")
-
-                    // Trova il valore massimo e il suo indice
-                    val maxValue = multipliedFeatures.maxOrNull()
-                    val maxIndex = multipliedFeatures.indexOf(maxValue)
-
-                    val emotion: String = when (maxIndex) {
-                        0 -> "Neutral"
-                        1 -> "Happy"
-                        2 -> "Surprise"
-                        3 -> "Unpleasant"
-                        else -> "Unknown"
-                    }
-                    model.close()
-
-
-                    onButtonShowPopupWindowClick(recordButton.rootView, emotion)
-
                     recordButton.setBackgroundColor(R.color.purple_container_material_design_3)
                     recordButton.setBackgroundResource(R.drawable.round_button)
                     true
@@ -545,7 +513,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // [START maps_current_place_on_map_ready]
     override fun onMapReady(map: GoogleMap) {
         this.map = map
-
         // Use a custom info window adapter to handle multiple lines of text in the
         // info window contents.
         this.map?.setInfoWindowAdapter(object : InfoWindowAdapter {
@@ -565,10 +532,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 return infoWindow
             }
         })
-
         // Get the current location of the device and set the position of the map.
         getDeviceLocation()
-
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI()
 
@@ -729,6 +694,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         } catch (e: SecurityException) {
             Log.e("Exception: %s", e.message, e)
+            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                LatLng(0.0, 0.0), DEFAULT_ZOOM.toFloat()))
         }
     }
     // [END maps_current_place_get_device_location]
@@ -737,14 +704,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
      * Prompts the user for permission to use the device location.
      */
     // [START maps_current_place_location_permission]
-    private fun getPermissions() {
-        if (ContextCompat.checkSelfPermission(this.applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_ALL)
+    private fun getLocationPermission() {
+        if (ContextCompat.checkSelfPermission(
+                this.applicationContext,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(this, permissions, REQUEST_LOCATION_PERMISSION)
         } else {
             locationPermissionGranted = true
+        }
+    }
+    fun getRecordPermission(){
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION)
+        } else {
             permissionToRecordAccepted = true
         }
     }
@@ -756,16 +732,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // [START maps_current_place_on_request_permissions_result]
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
-            PERMISSIONS_REQUEST_ALL -> {
-                // Controlla se tutti i permessi richiesti sono stati concessi
-                if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+            REQUEST_LOCATION_PERMISSION -> {
+                if(grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                     // Tutti i permessi richiesti sono stati concessi
                     locationPermissionGranted = true
+                    fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+                } else {
+                    locationPermissionGranted = false
+                }
+            }
+
+            REQUEST_RECORD_AUDIO_PERMISSION -> {
+                if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                    // Tutti i permessi richiesti sono stati concessi
                     permissionToRecordAccepted = true
                 } else {
-                    // Almeno uno dei permessi richiesti è stato negato
-                    // Puoi gestire questa situazione come preferisci
-                    // Ad esempio, mostrando un messaggio di errore o disabilitando le funzionalità correlate alla posizione e alla registrazione audio
+                    permissionToRecordAccepted = false
                 }
             }
             // Gestisci eventuali altri codici di richiesta dei permessi se necessario
@@ -792,7 +774,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 map?.isMyLocationEnabled = false
                 map?.uiSettings?.isMyLocationButtonEnabled = false
                 lastKnownLocation = null
-                getPermissions()
+                //getPermissions()
             }
         } catch (e: SecurityException) {
             Log.e("Exception: %s", e.message, e)
