@@ -42,6 +42,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupWindow
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Space
 import android.widget.TextView
@@ -323,64 +324,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d(TAG, "Slider value is $value")
         }
 
-
-        /*
-        val sendButton = findViewById<Button>(R.id.sendButton)
-        sendButton.setOnClickListener {
-            // Ottenere la posizione attuale dell'utente
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                fusedLocationProviderClient.lastLocation
-                    .addOnSuccessListener { location: Location? ->
-                        saveAudioFileToCloudStorage(audioFile, location, emotion)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e(TAG, "Error getting location", e)
-                    }
-            }
-        }*/
     }
-
-    /*
-    fun saveAudioFileToCloudStorage(audioFile: File, location: Location?, emotion: String) {
-        if (location != null) {
-            // Ottieni le coordinate della posizione
-            val latitude = location.latitude
-            val longitude = location.longitude
-
-            // Esegui il caricamento del file audio sul cloud storage
-            val storage = FirebaseStorage.getInstance()
-            val storageRef = storage.reference
-            val audioRef = storageRef.child("audio/${audioFile.name}")
-
-            val uploadTask = audioRef.putFile(Uri.fromFile(audioFile))
-            uploadTask.addOnSuccessListener {
-                // Caricamento del file audio completato con successo
-                Log.d(TAG, "File audio caricato con successo")
-
-                // Ora puoi salvare l'utente, l'emozione e le coordinate della posizione
-                // insieme al percorso del file audio nel database o in qualsiasi altro luogo necessario
-                // Ad esempio, puoi utilizzare Firebase Realtime Database o Firestore per questo scopo
-                // Oppure puoi salvare queste informazioni direttamente nel cloud storage utilizzando i metadati del file
-
-                // Poi, puoi notificare all'utente che il caricamento è completato o eseguire altre azioni necessarie
-            }.addOnFailureListener { e ->
-                // Gestire eventuali errori durante il caricamento del file audio
-                Log.e(TAG, "Errore durante il caricamento del file audio", e)
-            }
-        } else {
-            // Gestisci il caso in cui la posizione non è disponibile
-            Log.e(TAG, "Posizione non disponibile")
-        }
-    }*/
-
-
     private fun startRecording() {
         Log.d(TAG, "Sto iniziando a registrare")
         if (permissionToRecordAccepted && !isRecording) {
@@ -440,7 +384,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         // Show the popup window
-        // The view parameter is used as the anchor view for the popup
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
 
         // Initialize and configure the audio player inside the popup
@@ -469,6 +412,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // Imposta il testo della TextView con l'emozione ricevuta
         emotionTextView.text = emotion
         val sendButton = popupView.findViewById<Button>(R.id.sendButton)
+
 
         sendButton.setOnClickListener {
             // Initialize Firebase Storage
@@ -507,10 +451,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     // Upload the recording to a database
                     dbManager.uploadRecording(lat, lon, mAuth.currentUser!!.email, emotion, uri.toString(), mAuth)
+                    popupWindow.dismiss()
                 }
             }.addOnFailureListener { exception ->
                 // Handle failed upload
                 Log.e("TAG", "Audio upload failed: $exception")
+                Toast.makeText(this, "AUDIO NOT UPLOADED", Toast.LENGTH_SHORT).show()
+                popupWindow.dismiss()
             }
         }
 
@@ -639,6 +586,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             // Ottieni il nome del luogo toccato utilizzando Geocoder
             val geocoder = Geocoder(this, Locale.getDefault())
             val builder = AlertDialog.Builder(this, R.style.RoundedAlertDialog)
+            builder.setView(ScrollView(this))
+
 
 
             dbManager.getRecordings(latitude, longitude, chosenRadius, object : DbManager.DbCallback {
@@ -678,6 +627,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         else
                             builder.setTitle("RECORDINGS: ")
 
+                        var counter = 4
                         // Itera attraverso la lista di registrazioni
                         for (recording in recordingsResultDTO.getlistOfRecordings()) {
                             val userRecordLayout = layoutInflater.inflate(R.layout.user_record_layout, null)
@@ -687,6 +637,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                                 if (key == "email"){
                                     val textViewTitle: TextView = userRecordLayout.findViewById(R.id.textViewTitle)
+                                    textViewTitle.text = value
+                                }
+
+                                if (key == "emotion"){
+                                    val textViewTitle: TextView = userRecordLayout.findViewById(R.id.emotionText)
                                     textViewTitle.text = value
                                 }
 
@@ -704,7 +659,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             val space = Space(this@MainActivity)
                             val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, resources.getDimensionPixelSize(R.dimen.space_height)) // Imposta l'altezza dello spazio come desiderato
                             dialogLayout.addView(space, params)
-
+                            counter -= 1
+                            if (counter == 0){
+                                dialogLayout.addView(layoutInflater.inflate(R.layout.button_load_more, null))
+                                break
+                            }
                         }
 
                         // Aggiungi un pulsante per chiudere il popup
