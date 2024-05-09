@@ -46,7 +46,8 @@ class DbManager {
                     Log.d(TAG, emotion.toString())
                     val recordInfo = hashMapOf(
                         "email" to document.data["email"].toString(),
-                        "audio" to document.data["audio"].toString()
+                        "audio" to document.data["audio"].toString(),
+                        "emotion" to document.data["emotion"].toString()
                     )
                     Log.d(TAG,document.data["email"].toString())
 
