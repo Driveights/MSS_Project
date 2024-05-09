@@ -1,7 +1,9 @@
 package unipi.mss.geomotion
 
+import android.net.Uri
 import android.util.Log
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
 import unipi.mss.geomotion.MainActivity.Companion.TAG
 import kotlin.math.cos
@@ -87,4 +89,34 @@ class DbManager {
                     Log.w(TAG, "Error adding document", e)
                 }
      */
+
+    fun uploadRecording(
+        lat: Double,
+        lon: Double,
+        email: String?,
+        emotion: String,
+        audioUri: String,
+        mAuth: FirebaseAuth
+    ) {
+        // Create a HashMap to store recording data
+        val user = hashMapOf(
+            "email" to (mAuth.currentUser?.email ?: "prova@example.com"), // If mAuth.currentUser?.email is null, fallback to "prova@example.com"
+            "lat" to lat,
+            "long" to lon,
+            "emotion" to emotion,
+            "audio" to audioUri
+        )
+
+        // Add a new document to the "recordings" collection with the recording data
+        db.collection("recordings")
+            .add(user)
+            .addOnSuccessListener { documentReference ->
+                // On success, log that data has been written to the database
+                Log.d(TAG, "Data written to the database")
+            }
+            .addOnFailureListener { e ->
+                // On failure, log the error
+                Log.w(TAG, "Error adding document", e)
+            }
+    }
 }

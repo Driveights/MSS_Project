@@ -52,6 +52,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.github.squti.androidwaverecorder.WaveRecorder
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -90,6 +91,7 @@ import unipi.mss.geomotion.ml.SerQuant
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.UUID
 
 
 /**
@@ -196,14 +198,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         .addOnFailureListener { e ->
             Log.w(TAG, "Error adding file", e)
         }*/
-
-        val download_uri = "gs://geomotion-195dc.appspot.com/kill-bill.wav"
-        val gsReference = download_uri?.let { storage.getReferenceFromUrl(it) }
-
-        gsReference?.downloadUrl?.addOnSuccessListener { uri ->
-            val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
-            //mediaPlayer?.start()
-        }
 
         // Prompt the user for permission.
 
@@ -392,8 +386,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         if (permissionToRecordAccepted && !isRecording) {
             recorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.DEFAULT)
-                setOutputFile(externalCacheDir?.absolutePath + "/audioFile.mp3")
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setOutputFile(externalCacheDir?.absolutePath + "/audioFile.m4a")
                 setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT)
 
                 try {
@@ -451,7 +445,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Initialize and configure the audio player inside the popup
 
-        val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.mp3"
+        val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.m4a"
         val mediaPlayer = MediaPlayer().apply {
 
             setDataSource(filePath)
@@ -460,7 +454,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 release()
             }
         }
-
         makeItPlayable(popupView, mediaPlayer)
 
         // Release MediaPlayer resources when popup is dismissed
@@ -475,6 +468,52 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Imposta il testo della TextView con l'emozione ricevuta
         emotionTextView.text = emotion
+        val sendButton = popupView.findViewById<Button>(R.id.sendButton)
+
+        sendButton.setOnClickListener {
+            // Initialize Firebase Storage
+            val storage = FirebaseStorage.getInstance()
+            // Get a reference to the root of your Firebase Storage bucket
+            val storageRef = storage.reference
+
+            // Generate a unique ID for the audio file
+            val audioUUID = UUID.randomUUID()
+
+            // Path to the audio file saved in the cache directory
+            val audioFilePath = externalCacheDir!!.absolutePath + "/audioFile.m4a"
+
+            // Create a reference to the audio file in Firebase Storage
+            val audioRef = storageRef.child("audio/${UUID.randomUUID()}.m4a") // Specify the path in your bucket
+
+            // Get a Uri for the audio file
+            val audioFile = Uri.fromFile(File(audioFilePath))
+
+            // Log the Uri of the audio file
+            Log.d(TAG, audioFile.toString())
+
+            // Upload the audio file to Firebase Storage
+            val uploadTask = audioRef.putFile(audioFile)
+
+            uploadTask.addOnSuccessListener { documentReference ->
+                // Handle successful upload
+                audioRef.downloadUrl.addOnSuccessListener { uri ->
+                    Log.d("TAG", "Audio upload successful: ${documentReference.metadata?.path}")
+                    Log.d("TAG", "Audio upload successful: ${uri.toString()}")
+
+                    // Get the device's location
+                    getDeviceLocation()
+                    var lat = lastKnownLocation!!.latitude
+                    var lon = lastKnownLocation!!.longitude
+
+                    // Upload the recording to a database
+                    dbManager.uploadRecording(lat, lon, mAuth.currentUser!!.email, emotion, uri.toString(), mAuth)
+                }
+            }.addOnFailureListener { exception ->
+                // Handle failed upload
+                Log.e("TAG", "Audio upload failed: $exception")
+            }
+        }
+
     }
 
     private fun makeItPlayable(popupView: View, mediaPlayer: MediaPlayer){
