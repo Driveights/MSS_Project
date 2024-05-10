@@ -19,10 +19,10 @@ class DbManager {
 
         val recordingsResultDTO = RecordingsResultDTO()
         val emotionsCounter = hashMapOf(
-            "happy" to 0,
-            "neutral" to 0,
-            "angry" to 0,
-            "unpleasant" to 0,
+            "Happy" to 0,
+            "Neutral" to 0,
+            "Surprise" to 0,
+            "Unpleasant" to 0,
         )
 
         val rapportoLat = radius / 111320 // Approssimazione del rapporto della differenza di latitudine
@@ -58,7 +58,7 @@ class DbManager {
                     
                     recordingsResultDTO.addRecording(recordInfo)
                 }
-                var maxEmotion = "unknown"
+                var maxEmotion = "Unknown"
                 if(!noResultFlag) {
                     // set the dominant emotion
                     val maxEmotionEntry = emotionsCounter.maxByOrNull { it.value }
