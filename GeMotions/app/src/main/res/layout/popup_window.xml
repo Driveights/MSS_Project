@@ -69,6 +69,58 @@
         android:textStyle="bold"
         android:visibility="visible"/>
 
+    <TextView
+        android:id="@+id/changeEmotion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:padding="8dp"
+        android:text="Change your emotion if needed"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:visibility="visible"/>
+
+    <RadioGroup
+        android:id="@+id/emotionRadioGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <RadioButton
+            android:id="@+id/emotionOption1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Neutral"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"/>
+
+        <RadioButton
+            android:id="@+id/emotionOption2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Happy"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+        <RadioButton
+            android:id="@+id/emotionOption3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Surprise"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+        <RadioButton
+            android:id="@+id/emotionOption4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Unpleasant"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+    </RadioGroup>
+
+
 
     <RelativeLayout
         android:layout_width="wrap_content"

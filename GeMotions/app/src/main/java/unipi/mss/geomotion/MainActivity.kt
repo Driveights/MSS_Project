@@ -30,6 +30,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupWindow
+import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Space
@@ -37,6 +38,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatRadioButton
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.github.squti.androidwaverecorder.WaveRecorder
@@ -256,10 +258,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             outputFeature0.getFloatValue(3)
                         )
 
-                        Log.e(TAG, mfccFeatures[0].toString())
-
-                        Log.e(TAG, "Valori moltiplicati: $multipliedFeatures")
-
                         // Trova il valore massimo e il suo indice
                         val maxValue = multipliedFeatures.maxOrNull()
                         val maxIndex = multipliedFeatures.indexOf(maxValue)
@@ -334,6 +332,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
+    @SuppressLint("SetTextI18n")
     private fun onButtonShowPopupWindowClick(view: View?, emotion: String) {
         
         // Inflate the layout of the popup window
@@ -345,6 +344,42 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val height = LinearLayout.LayoutParams.WRAP_CONTENT
         val focusable = true // Lets taps outside the popup also dismiss it
         val popupWindow = PopupWindow(popupView, width, height, focusable)
+
+        var changedEmotion = emotion
+
+        // Set up the RadioGroup with RadioButton click listener
+        val emotionRadioGroup = popupView.findViewById<RadioGroup>(R.id.emotionRadioGroup)
+        emotionRadioGroup.setOnCheckedChangeListener { group, checkedId ->
+            // Update the 'emotion' variable based on the selected RadioButton
+            changedEmotion = when (checkedId) {
+                R.id.emotionOption1 -> "Neutral"
+                R.id.emotionOption2 -> "Happy"
+                R.id.emotionOption3 -> "Surprise"
+                R.id.emotionOption4 -> "Unpleasant"
+                else -> emotion // Fallback to the initial emotion if none selected
+            }
+
+            val emotionTextView = popupView.findViewById<TextView>(R.id.emotionText)
+            emotionTextView.text = changedEmotion + "  " + emojiText(changedEmotion)
+
+            val radioButtonColor = ContextCompat.getColorStateList(this, R.color.white)
+            for (i in 0 until emotionRadioGroup.childCount) {
+                val radioButton = emotionRadioGroup.getChildAt(i) as? AppCompatRadioButton
+                radioButton?.buttonTintList = radioButtonColor
+            }
+        }
+
+        // Set initial checked RadioButton based on the initial emotion
+        val initialCheckedRadioButtonId = when (emotion) {
+            "Neutral" -> R.id.emotionOption1
+            "Happy" -> R.id.emotionOption2
+            "Surprise" -> R.id.emotionOption3
+            "Unpleasant" -> R.id.emotionOption4
+            else -> -1 // No initial emotion selected
+        }
+        if (initialCheckedRadioButtonId != -1) {
+            emotionRadioGroup.check(initialCheckedRadioButtonId)
+        }
 
 
         val delButton = popupView.findViewById<Button>(R.id.deleteButton)
@@ -373,13 +408,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             mediaPlayer.release()
         }
 
-        Log.e(TAG,emotion)
-
         // Ottieni il riferimento alla TextView nel layout popup_window.xml
         val emotionTextView = popupView.findViewById<TextView>(R.id.emotionText)
 
         // Imposta il testo della TextView con l'emozione ricevuta
-        emotionTextView.text = emojiText(emotion)
+        emotionTextView.text = emotion + "  " + emojiText(emotion)
         val sendButton = popupView.findViewById<Button>(R.id.sendButton)
 
 
@@ -416,7 +449,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     var lon = lastKnownLocation!!.longitude
 
                     // Upload the recording to a database
-                    dbManager.uploadRecording(lat, lon, emotion, uri.toString(), mAuth)
+                    dbManager.uploadRecording(lat, lon, changedEmotion, uri.toString(), mAuth)
                     popupWindow.dismiss()
                 }
             }.addOnFailureListener { exception ->
