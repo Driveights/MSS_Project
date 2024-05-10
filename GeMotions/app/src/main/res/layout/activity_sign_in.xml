@@ -9,6 +9,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="15dp"
+    android:background="@drawable/background_image "
     >
 
     <TextView
@@ -16,6 +17,7 @@
         android:textSize="25sp"
         android:textStyle="bold"
         android:gravity="center"
+        android:textColor="@color/white"
         android:layout_marginBottom="20dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
@@ -29,6 +31,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/email"
             android:hint="@string/email"
+            android:textColor="@color/white"
             />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -40,6 +43,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/password"
             android:hint="@string/password"
+            android:textColor="@color/white"
             />
     </com.google.android.material.textfield.TextInputLayout>
     
@@ -64,6 +68,7 @@
         android:gravity="center"
         android:layout_marginTop="20sp"
         android:id="@+id/loginNow"
+        android:textColor="@color/white"
         android:text="@string/click_to_login"/>
 
 

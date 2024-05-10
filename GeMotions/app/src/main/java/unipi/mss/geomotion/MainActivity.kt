@@ -156,7 +156,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         } else {
             // Se mGoogleSignInClient non è stato inizializzato, avvia direttamente l'attività di accesso
             Log.d(TAG, "Logout success")
-            val intent = Intent(this, LoginActivity::class.java)
+            val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
             finish()
         }

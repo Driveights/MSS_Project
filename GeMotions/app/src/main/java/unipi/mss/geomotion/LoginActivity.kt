@@ -3,14 +3,19 @@ package unipi.mss.geomotion
 import android.app.UiModeManager
 import android.content.ContentValues.TAG
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.MediaController
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.VideoView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -53,6 +58,7 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
 
     @Override
     override fun onCreate(savedInstanceState: Bundle?) {
+
         Log.d(TAG,"Setting theme")
         val uiModeManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
         if (uiModeManager != null && uiModeManager.nightMode == UiModeManager.MODE_NIGHT_YES) {
