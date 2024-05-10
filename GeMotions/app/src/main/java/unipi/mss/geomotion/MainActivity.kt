@@ -70,7 +70,6 @@ import java.io.File
 import java.util.Locale
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
-import unipi.mss.geomotion.ml.SerQuant
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -113,9 +112,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var permissionToRecordAccepted = false
     private var recorder: MediaRecorder? = null
     private var isRecording = false
-    private lateinit var waveRecorder: WaveRecorder
     private var mfccRecorder: MFCCRecorder = MFCCRecorder()
     private var audioRecoder: AudioRecorder = AudioRecorder()
+    private var utils: Utils = Utils()
+    private var quantizedModel : QuantizedModel = QuantizedModel()
+    private var vokaturiModel : VokaturiModel = VokaturiModel()
 
     // Gestione login/logout
     private lateinit var mGoogleSignInClient: GoogleSignInClient
@@ -230,55 +231,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }else {
                         mfccRecorder.StopAudioDispatcher()
                         audioRecoder.stopRecording()
+                        val emotion = quantizedModel.processAudio(this, mfccRecorder)
 
-                        val model = SerQuant.newInstance(this)
-
-                        val mfccFeatures = mfccRecorder.getMfccList().transpose()
-                        val transposedMfccFeatures = ArrayList<FloatArray>().apply {
-                            if (mfccFeatures.isNotEmpty()) {
-                                val height = mfccFeatures[0].size
-                                val width = mfccFeatures.size
-                                for (i in 0 until height) {
-                                    val newArray = FloatArray(width)
-                                    for (j in mfccFeatures.indices) {
-                                        newArray[j] = mfccFeatures[j][i]
-                                    }
-                                    add(newArray)
-                                }
-                            }
-                        }
-                        val featureBuffer = floatArrayListToByteBuffer(transposedMfccFeatures)
-                        val inputFeature0 =
-                            TensorBuffer.createFixedSize(intArrayOf(1, 47, 13), DataType.FLOAT32)
-                        inputFeature0.loadBuffer(adjustByteBuffer(featureBuffer))
-
-                        val outputs = model.process(inputFeature0)
-                        val outputFeature0 = outputs.outputFeature0AsTensorBuffer
-
-                        // Calcola i valori moltiplicati e visualizzali nel log come errore
-                        val multipliedFeatures = listOf(
-                            outputFeature0.getFloatValue(0),
-                            outputFeature0.getFloatValue(1) * 10,
-                            outputFeature0.getFloatValue(2) * 5,
-                            outputFeature0.getFloatValue(3)
-                        )
-
-                        Log.e(TAG, "Valori moltiplicati: $multipliedFeatures")
-
-                        // Trova il valore massimo e il suo indice
-                        val maxValue = multipliedFeatures.maxOrNull()
-                        val maxIndex = multipliedFeatures.indexOf(maxValue)
-
-                        val emotion: String = when (maxIndex) {
-                            0 -> "Neutral"
-                            1 -> "Happy"
-                            2 -> "Surprise"
-                            3 -> "Unpleasant"
-                            else -> "Unknown"
-                        }
-                        model.close()
-
-
+                        // Uncomment to use the Vokaturi Model
+                        /*
+                        val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.m4a"
+                        val emotion = vokaturiModel.processAudio(filePath)
+                        */
                         onButtonShowPopupWindowClick(recordButton.rootView, emotion)
                     }
                     recordButton.setBackgroundColor(R.color.purple_container_material_design_3)
@@ -334,7 +293,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 release()
             }
         }
-        makeItPlayable(popupView, mediaPlayer)
+        audioRecoder.makeItPlayable(popupView, mediaPlayer)
 
         // Release MediaPlayer resources when popup is dismissed
         popupWindow.setOnDismissListener {
@@ -343,7 +302,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Ottieni il riferimento alla TextView nel layout popup_window.xml
         val emotionTextView = popupView.findViewById<TextView>(R.id.emotionText)
-        emotionTextView.text = emotion + "  " + emojiText(emotion)
+        emotionTextView.text = emotion + "  " + utils.emojiText(emotion)
 
 
         var changedEmotion = emotion
@@ -359,7 +318,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 else -> emotion // Fallback to the initial emotion if none selected
             }
 
-            emotionTextView.text = changedEmotion + "  " + emojiText(changedEmotion)
+            emotionTextView.text = changedEmotion + "  " + utils.emojiText(changedEmotion)
 
             // Set button tint for all RadioButtons in the RadioGroup
             val radioButtonColor = ContextCompat.getColorStateList(this, R.color.radio_button_color_selector)
@@ -431,57 +390,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-    private fun makeItPlayable(popupView: View, mediaPlayer: MediaPlayer){
-
-
-        val playPauseButton = popupView.findViewById<ImageButton>(R.id.playPauseButton)
-        val seekBar = popupView.findViewById<SeekBar>(R.id.seekBar)
-        val durationTextView = popupView.findViewById<TextView>(R.id.durationTextView)
-
-        // Set up play/pause functionality
-        playPauseButton.setOnClickListener {
-            if (mediaPlayer.isPlaying) {
-                mediaPlayer.pause()
-                playPauseButton.setImageResource(android.R.drawable.ic_media_play)
-            } else {
-                mediaPlayer.start()
-                playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
-            }
-        }
-
-        // Update seekBar progress and durationTextView
-        mediaPlayer.setOnPreparedListener {
-            seekBar.max = mediaPlayer.duration
-            val duration = mediaPlayer.duration
-            val minutes = duration / 1000 / 60
-            val seconds = duration / 1000 % 60
-            durationTextView.text = String.format("%02d:%02d", minutes, seconds)
-        }
-
-        mediaPlayer.setOnCompletionListener {
-            // Reset play/pause button when playback completes
-            playPauseButton.setImageResource(android.R.drawable.ic_media_play)
-        }
-
-        // Update seekBar progress during playback
-        mediaPlayer.setOnSeekCompleteListener {
-            seekBar.progress = mediaPlayer.currentPosition
-        }
-
-        // Update seekBar progress when user changes seekBar position
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    mediaPlayer.seekTo(progress)
-                }
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-
-        })
-    }
     /**
      * Saves the state of the map when the activity is paused.
      */
@@ -565,7 +473,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         val address = addresses[0]
                         val addressString = address.thoroughfare ?: "Indirizzo non disponibile"
                         // Aggiungi un marker alla posizione toccata
-                        val markerOptions = markerCustomed(recordingsResultDTO.getEmotion(), addressString, latLng)
+                        val markerOptions = utils.markerCustomed(recordingsResultDTO.getEmotion(), addressString, latLng)
                         currentMarker = map.addMarker(markerOptions)
                         // Mostra le informazioni ottenute in un Toast
                     }
@@ -578,7 +486,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         .radius(chosenRadius) // Imposta il raggio in metri
                         .strokeWidth(2f)
                         .strokeColor(R.color.white)
-                        .fillColor(chooseColorRadius(recordingsResultDTO.getEmotion())) // Viola con un livello di opacità del 70%) // Opzionale: Imposta il colore di riempimento
+                        .fillColor(utils.chooseColorRadius(recordingsResultDTO.getEmotion())) // Viola con un livello di opacità del 70%) // Opzionale: Imposta il colore di riempimento
                     currentCircle = map.addCircle(circleOptions)
                     currentMarker?.showInfoWindow()
 
@@ -621,55 +529,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun chooseColorRadius(emotion: String): Int {
-        return when (emotion) {
-            "Happy" -> Color.argb(128, 0, 128, 0)   // Verde con 50% di opacità
-            "Neutral" -> Color.argb(128, 128, 128, 128)   // Grigio con 50% di opacità
-            "Surprise" -> Color.argb(128, 255, 255, 0)   // Giallo con 50% di opacità
-            "Unpleasant" -> Color.argb(128, 255, 0, 0)   // Rosso con 50% di opacità
-            else -> Color.argb(50, 128, 0, 128)   // Ritorna il colore di default per le emozioni non riconosciute con 20% di opacità
-        }
-    }
-
-    private fun emojiText(emotion: String): String {
-        return when (emotion) {
-            "Happy" -> "😄"
-            "Neutral" -> "\uD83D\uDE11"  // Grigio con 50% di opacità
-            "Surprise" -> "\uD83D\uDE32"  // Giallo con 50% di opacità
-            "Unpleasant" -> "\uD83D\uDE1E"
-            else -> "❓"
-        }
-    }
-
-
-    private fun markerCustomed(emotion: String, addressString: String, latLng: LatLng): MarkerOptions {
-        val text = emojiText(emotion)
-        val textSize = 100f // dimensione del testo in pixel
-        val padding = 1 // spazio intorno al testo in pixel
-
-        // Calcola le dimensioni dell'icona
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        textPaint.textSize = textSize
-        val textWidth = textPaint.measureText(text)
-        val textHeight = textPaint.descent() - textPaint.ascent()
-        val bitmapWidth = textWidth.toInt() + 2 * padding
-        val bitmapHeight = textHeight.toInt() + 2 * padding
-
-        // Crea un'immagine bitmap vuota
-        val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-
-        canvas.drawText(text, padding.toFloat(), (bitmapHeight / 2 - (textPaint.descent() + textPaint.ascent()) / 2) + padding, textPaint)
-
-        // Imposta l'icona del marker
-        val icon = BitmapDescriptorFactory.fromBitmap(bitmap)
-        val markerOptions = MarkerOptions()
-            .position(latLng)
-            .title(addressString)
-            .snippet("Emotion: ${emotion}")
-            .icon(icon)
-        return markerOptions
-    }
 
     private fun addRecordingToLayout(dialogLayout: ViewGroup, iterator: MutableIterator<HashMap<String, String>>, latidude:Double, longitude:Double, radius:Double, counter_cached : Long = DbManager.LIMIT){
         var counter = 3
@@ -690,14 +549,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 if (key == "emotion"){
                     val textViewTitle: TextView = userRecordLayout.findViewById(R.id.emotionText)
-                    textViewTitle.text = emojiText(value)
+                    textViewTitle.text = utils.emojiText(value)
                 }
 
                 if (key == "audio"){
                     val gsReference = value.let { storage.getReferenceFromUrl(it) }
                     gsReference.downloadUrl.addOnSuccessListener { uri ->
                         val mediaPlayer = MediaPlayer.create(this@MainActivity, uri)
-                        makeItPlayable(userRecordLayout, mediaPlayer)
+                        audioRecoder.makeItPlayable(userRecordLayout, mediaPlayer)
                     }
                 }
 
@@ -880,69 +739,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val M_MAX_ENTRIES = 5
     }
 
-    fun adjustByteBuffer(buffer: ByteBuffer): ByteBuffer {
-        val desiredSizeBytes = 2444
 
-        // Se il buffer è più piccolo, aggiungi zeri
-        if (buffer.capacity() < desiredSizeBytes) {
-            val zeroBuffer = ByteBuffer.allocateDirect(desiredSizeBytes)
-            zeroBuffer.order(ByteOrder.nativeOrder())
-            buffer.rewind()
-            zeroBuffer.put(buffer)
-            zeroBuffer.position(buffer.capacity()) // Imposta la posizione per aggiungere zeri alla fine
-            zeroBuffer.rewind()
-            return zeroBuffer
-        }
-        // Se il buffer è più grande, troncalo
-        else if (buffer.capacity() > desiredSizeBytes) {
-            buffer.limit(desiredSizeBytes) // Imposta il limite al nuovo numero di byte
-            buffer.rewind()
-            return buffer.slice() // Crea una vista del buffer troncato
-        }
-        // Altrimenti, restituisci il buffer originale
-        else {
-            buffer.rewind()
-            return buffer
-        }
-    }
 
-    fun floatArrayListToByteBuffer(floatArrayList: ArrayList<FloatArray>): ByteBuffer {
-        // Calculate total number of floats
-        var totalFloats = 0
-        for (floatArray in floatArrayList) {
-            totalFloats += floatArray.size
-        }
-
-        // Allocate direct ByteBuffer with native byte order
-        val bufferSize = totalFloats * Float.SIZE_BYTES
-        val byteBuffer = ByteBuffer.allocateDirect(bufferSize)
-        byteBuffer.order(ByteOrder.nativeOrder())
-
-        // Flatten the float arrays into the ByteBuffer
-        for (floatArray in floatArrayList) {
-            for (value in floatArray) {
-                byteBuffer.putFloat(value)
-            }
-        }
-
-        // Rewind the ByteBuffer to start position and return
-        byteBuffer.rewind()
-        return byteBuffer
-    }
-
-    fun List<FloatArray>.transpose(): List<FloatArray> {
-        if (isEmpty()) return emptyList()
-        val height = first().size
-        val width = size
-        val transposed = Array(height) { FloatArray(width) }
-        for (i in indices) {
-            val row = this[i]
-            for (j in row.indices) {
-                transposed[j][i] = row[j]
-            }
-        }
-        return transposed.toList()
-    }
 }
 
 
