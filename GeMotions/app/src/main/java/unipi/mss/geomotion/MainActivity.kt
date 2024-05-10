@@ -557,7 +557,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 )
             }
 
-            dbManager.getRecordings(latitude, longitude, chosenRadius, object : DbManager.DbCallback {
+            dbManager.getRecordings(latitude, longitude, chosenRadius, System.currentTimeMillis()/1000, object : DbManager.DbCallback {
                 override fun onRecordingsResultReady(recordingsResultDTO: RecordingsResultDTO) {
                     val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1)!!
                     if (addresses.isNotEmpty()) {

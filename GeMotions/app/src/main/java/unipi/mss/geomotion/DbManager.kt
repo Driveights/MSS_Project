@@ -3,19 +3,23 @@ package unipi.mss.geomotion
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import unipi.mss.geomotion.MainActivity.Companion.TAG
 import kotlin.math.cos
 
 class DbManager {
+
+    private val LIMIT: Long = 15
     interface DbCallback {
         fun onRecordingsResultReady(recordingsResultDTO: RecordingsResultDTO)
     }
 
     val db = Firebase.firestore
 
-    fun getRecordings(lat: Double, long: Double, radius: Double, callback: DbCallback):RecordingsResultDTO {
+    fun getRecordings(lat: Double, long: Double, radius: Double, timestamp: Long, callback: DbCallback):RecordingsResultDTO {
 
         val recordingsResultDTO = RecordingsResultDTO()
         val emotionsCounter = hashMapOf(
@@ -38,7 +42,9 @@ class DbManager {
             .whereLessThanOrEqualTo("long", long + rapportoLon)
             .whereGreaterThanOrEqualTo("lat", lat - rapportoLat)
             .whereLessThanOrEqualTo("lat", lat + rapportoLat)
-            .orderBy("timestamp")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .endAt(timestamp)
+            .limit(LIMIT)
             .get()
             .addOnSuccessListener { result ->
                 var noResultFlag = true
