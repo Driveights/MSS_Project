@@ -5,6 +5,7 @@ import android.Manifest
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -597,7 +598,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             builder.setTitle("RECORDINGS: ")
 
                         val iterator = recordingsResultDTO.getlistOfRecordings().iterator()
-                        addRecordingToLayout(dialogLayout, iterator)
+                        addRecordingToLayout(dialogLayout, iterator, latitude, longitude, chosenRadius)
 
                         // Aggiungi un pulsante per chiudere il popup
                         builder.setPositiveButton("Chiudi") { dialog, _ ->
@@ -670,8 +671,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         return markerOptions
     }
 
-    private fun addRecordingToLayout(dialogLayout: ViewGroup, iterator: MutableIterator<HashMap<String, String>>){
+    private fun addRecordingToLayout(dialogLayout: ViewGroup, iterator: MutableIterator<HashMap<String, String>>, latidude:Double, longitude:Double, radius:Double, counter_cached : Long = DbManager.LIMIT){
         var counter = 3
+        var cc_cached = counter_cached
+        var last_timestamp = 0L
         // Itera attraverso la lista di registrazioni
         while (iterator.hasNext()) {
             val recording = iterator.next()
@@ -698,6 +701,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
 
+                if (key == "timestamp"){
+                    last_timestamp=value.toLong()
+                }
+
             }
 
             dialogLayout.addView(userRecordLayout)
@@ -706,12 +713,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, resources.getDimensionPixelSize(R.dimen.space_height)) // Imposta l'altezza dello spazio come desiderato
             dialogLayout.addView(space, params)
             counter -= 1
-            if (counter == 0){
+            cc_cached -=1
+            if (cc_cached == 0.toLong()){
+                Log.d(TAG,"Ho cc_cached = 0")
+                dbManager.getRecordings(latidude,longitude,radius, last_timestamp,object : DbManager.DbCallback {
+                    override fun onRecordingsResultReady(recordingsResultDTO: RecordingsResultDTO) {
+                        Log.d(TAG,"Sto chiedendo nuove cose, speriamo non crashi")
+                        val pippo = recordingsResultDTO.getlistOfRecordings().iterator()
+                        val buttonLoadMore = layoutInflater.inflate(R.layout.button_load_more, null)
+                        buttonLoadMore.findViewById<Button>(R.id.buttonLoadMore).setOnClickListener {
+                            addRecordingToLayout(dialogLayout, pippo,latidude,radius,longitude, DbManager.LIMIT)
+                            dialogLayout.removeView(buttonLoadMore)
+                        }
+                        dialogLayout.addView(buttonLoadMore)
+                    }
+                })
+                break
+            }
+            else if (counter == 0){
+                Log.d(TAG,"counter = 0")
                 val buttonLoadMore = layoutInflater.inflate(R.layout.button_load_more, null)
                 buttonLoadMore.findViewById<Button>(R.id.buttonLoadMore).setOnClickListener {
-                    addRecordingToLayout(dialogLayout, iterator)
+                    addRecordingToLayout(dialogLayout, iterator,latidude,radius,longitude, cc_cached)
                     dialogLayout.removeView(buttonLoadMore)
-
                 }
                 dialogLayout.addView(buttonLoadMore)
                 break

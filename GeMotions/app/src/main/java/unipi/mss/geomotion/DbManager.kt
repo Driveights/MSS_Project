@@ -12,7 +12,9 @@ import kotlin.math.cos
 
 class DbManager {
 
-    private val LIMIT: Long = 15
+    companion object {
+        val LIMIT: Long = 15
+    }
     interface DbCallback {
         fun onRecordingsResultReady(recordingsResultDTO: RecordingsResultDTO)
     }
@@ -37,13 +39,18 @@ class DbManager {
         val rapportoLon = radius / lunghezzaGradoLongitudine
 
         Log.d(TAG, "Query to db")
+        Log.d(TAG, "TIMESTAMP: $timestamp")
+        Log.d(TAG, "Lat: $lat")
+        Log.d(TAG, "Long: $long")
+        Log.d(TAG, "Radius: $radius")
+        Log.d(TAG, "limit: $LIMIT")
         db.collection("recordings")
             .whereGreaterThanOrEqualTo("long", long - rapportoLon)
             .whereLessThanOrEqualTo("long", long + rapportoLon)
             .whereGreaterThanOrEqualTo("lat", lat - rapportoLat)
             .whereLessThanOrEqualTo("lat", lat + rapportoLat)
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .endAt(timestamp)
+            .startAt(timestamp)
             .limit(LIMIT)
             .get()
             .addOnSuccessListener { result ->
@@ -58,7 +65,8 @@ class DbManager {
                     val recordInfo = hashMapOf(
                         "email" to document.data["email"].toString(),
                         "audio" to document.data["audio"].toString(),
-                        "emotion" to document.data["emotion"].toString()
+                        "emotion" to document.data["emotion"].toString(),
+                        "timestamp" to document.data["timestamp"].toString()
                     )
                     Log.d(TAG,document.data["email"].toString())
                     
