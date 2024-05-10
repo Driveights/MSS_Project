@@ -1,5 +1,6 @@
 package unipi.mss.geomotion
 
+import AudioRecorder
 import android.Manifest
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
@@ -113,6 +114,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var isRecording = false
     private lateinit var waveRecorder: WaveRecorder
     private var mfccRecorder: MFCCRecorder = MFCCRecorder()
+    private var audioRecoder: AudioRecorder = AudioRecorder()
 
     // Gestione login/logout
     private lateinit var mGoogleSignInClient: GoogleSignInClient
@@ -208,7 +210,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }else if( !locationPermissionGranted){
                         Toast.makeText(this, "You must give permission to use your location",Toast.LENGTH_LONG).show()
                     }else {     // ho entrambi i permessi
-                        startRecording()
+                        audioRecoder.startRecording(externalCacheDir?.absolutePath + "/audioFile.m4a")
                         recordButton.setBackgroundColor(R.color.purple_material_design_3)
                         recordButton.setBackgroundResource(R.drawable.round_button)
                         mfccRecorder.InitAudioDispatcher()
@@ -226,7 +228,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         Toast.makeText(this, "You must give permission to use your location",Toast.LENGTH_LONG).show()
                     }else {
                         mfccRecorder.StopAudioDispatcher()
-                        stopRecording()
+                        audioRecoder.stopRecording()
 
                         val model = SerQuant.newInstance(this)
 
@@ -377,13 +379,47 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             mediaPlayer.release()
         }
 
-        Log.e(TAG,emotion)
-
         // Ottieni il riferimento alla TextView nel layout popup_window.xml
         val emotionTextView = popupView.findViewById<TextView>(R.id.emotionText)
+        emotionTextView.text = emotion + "  " + emojiText(emotion)
+
+
+        var changedEmotion = emotion
+        val emotionRadioGroup = popupView.findViewById<RadioGroup>(R.id.emotionRadioGroup)
+
+        emotionRadioGroup.setOnCheckedChangeListener { group, checkedId ->
+            // Update the 'emotion' variable based on the selected RadioButton
+            changedEmotion = when (checkedId) {
+                R.id.emotionOption1 -> "Neutral"
+                R.id.emotionOption2 -> "Happy"
+                R.id.emotionOption3 -> "Surprise"
+                R.id.emotionOption4 -> "Unpleasant"
+                else -> emotion // Fallback to the initial emotion if none selected
+            }
+
+            emotionTextView.text = changedEmotion + "  " + emojiText(changedEmotion)
+
+            // Set button tint for all RadioButtons in the RadioGroup
+            val radioButtonColor = ContextCompat.getColorStateList(this, R.color.radio_button_color_selector)
+            for (i in 0 until emotionRadioGroup.childCount) {
+                val radioButton = emotionRadioGroup.getChildAt(i) as? AppCompatRadioButton
+                radioButton?.buttonTintList = radioButtonColor
+            }
+        }
+
+        // Set initial checked RadioButton based on the initial emotion
+        val initialCheckedRadioButtonId = when (emotion) {
+            "Neutral" -> R.id.emotionOption1
+            "Happy" -> R.id.emotionOption2
+            "Surprise" -> R.id.emotionOption3
+            "Unpleasant" -> R.id.emotionOption4
+            else -> -1 // No initial emotion selected
+        }
+        if (initialCheckedRadioButtonId != -1) {
+            emotionRadioGroup.check(initialCheckedRadioButtonId)
+        }
 
         // Imposta il testo della TextView con l'emozione ricevuta
-        emotionTextView.text = emojiText(emotion)
         val sendButton = popupView.findViewById<Button>(R.id.sendButton)
 
 
@@ -420,7 +456,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     var lon = lastKnownLocation!!.longitude
 
                     // Upload the recording to a database
-                    dbManager.uploadRecording(lat, lon, emotion, uri.toString(), mAuth)
+                    dbManager.uploadRecording(lat, lon, changedEmotion, uri.toString(), mAuth)
                     popupWindow.dismiss()
                 }
             }.addOnFailureListener { exception ->
