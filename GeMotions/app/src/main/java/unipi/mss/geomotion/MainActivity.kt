@@ -4,6 +4,7 @@ import android.Manifest
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -13,6 +14,7 @@ import android.graphics.Paint
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
+import android.location.LocationManager
 import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.net.Uri
@@ -204,11 +206,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }else if( !locationPermissionGranted){
                         Toast.makeText(this, "You must give permission to use your location",Toast.LENGTH_LONG).show()
                     }else {     // ho entrambi i permessi
-                        startRecording()
-                        recordButton.setBackgroundColor(R.color.purple_material_design_3)
-                        recordButton.setBackgroundResource(R.drawable.round_button)
-                        mfccRecorder.InitAudioDispatcher()
-                        mfccRecorder.startMfccExtraction()
+                        // check if GPS is enabled
+                        if (isLocationEnabled()) {
+                            startRecording()
+                            recordButton.setBackgroundColor(R.color.purple_material_design_3)
+                            recordButton.setBackgroundResource(R.drawable.round_button)
+                            mfccRecorder.InitAudioDispatcher()
+                            mfccRecorder.startMfccExtraction()
+                        }else{
+                            Toast.makeText(this, "You must activate the GPS location",Toast.LENGTH_LONG).show()
+                        }
                     }
                     true
                 }
@@ -221,60 +228,65 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }else if( !locationPermissionGranted){
                         Toast.makeText(this, "You must give permission to use your location",Toast.LENGTH_LONG).show()
                     }else {
-                        mfccRecorder.StopAudioDispatcher()
-                        stopRecording()
+                        if (isLocationEnabled()) {
+                            mfccRecorder.StopAudioDispatcher()
+                            stopRecording()
 
-                        val model = SerQuant.newInstance(this)
+                            val model = SerQuant.newInstance(this)
 
-                        val mfccFeatures = mfccRecorder.getMfccList().transpose()
-                        val transposedMfccFeatures = ArrayList<FloatArray>().apply {
-                            if (mfccFeatures.isNotEmpty()) {
-                                val height = mfccFeatures[0].size
-                                val width = mfccFeatures.size
-                                for (i in 0 until height) {
-                                    val newArray = FloatArray(width)
-                                    for (j in mfccFeatures.indices) {
-                                        newArray[j] = mfccFeatures[j][i]
+                            val mfccFeatures = mfccRecorder.getMfccList().transpose()
+                            val transposedMfccFeatures = ArrayList<FloatArray>().apply {
+                                if (mfccFeatures.isNotEmpty()) {
+                                    val height = mfccFeatures[0].size
+                                    val width = mfccFeatures.size
+                                    for (i in 0 until height) {
+                                        val newArray = FloatArray(width)
+                                        for (j in mfccFeatures.indices) {
+                                            newArray[j] = mfccFeatures[j][i]
+                                        }
+                                        add(newArray)
                                     }
-                                    add(newArray)
                                 }
                             }
+                            val featureBuffer = floatArrayListToByteBuffer(transposedMfccFeatures)
+                            val inputFeature0 =
+                                TensorBuffer.createFixedSize(
+                                    intArrayOf(1, 47, 13),
+                                    DataType.FLOAT32
+                                )
+                            inputFeature0.loadBuffer(adjustByteBuffer(featureBuffer))
+
+                            val outputs = model.process(inputFeature0)
+                            val outputFeature0 = outputs.outputFeature0AsTensorBuffer
+
+                            // Calcola i valori moltiplicati e visualizzali nel log come errore
+                            val multipliedFeatures = listOf(
+                                outputFeature0.getFloatValue(0),
+                                outputFeature0.getFloatValue(1),
+                                outputFeature0.getFloatValue(2),
+                                outputFeature0.getFloatValue(3)
+                            )
+
+                            Log.e(TAG, mfccFeatures[0].toString())
+
+                            Log.e(TAG, "Valori moltiplicati: $multipliedFeatures")
+
+                            // Trova il valore massimo e il suo indice
+                            val maxValue = multipliedFeatures.maxOrNull()
+                            val maxIndex = multipliedFeatures.indexOf(maxValue)
+
+                            val emotion: String = when (maxIndex) {
+                                0 -> "Neutral"
+                                1 -> "Happy"
+                                2 -> "Surprise"
+                                3 -> "Unpleasant"
+                                else -> "Unknown"
+                            }
+                            model.close()
+
+
+                            onButtonShowPopupWindowClick(recordButton.rootView, emotion)
                         }
-                        val featureBuffer = floatArrayListToByteBuffer(transposedMfccFeatures)
-                        val inputFeature0 =
-                            TensorBuffer.createFixedSize(intArrayOf(1, 47, 13), DataType.FLOAT32)
-                        inputFeature0.loadBuffer(adjustByteBuffer(featureBuffer))
-
-                        val outputs = model.process(inputFeature0)
-                        val outputFeature0 = outputs.outputFeature0AsTensorBuffer
-
-                        // Calcola i valori moltiplicati e visualizzali nel log come errore
-                        val multipliedFeatures = listOf(
-                            outputFeature0.getFloatValue(0),
-                            outputFeature0.getFloatValue(1),
-                            outputFeature0.getFloatValue(2),
-                            outputFeature0.getFloatValue(3)
-                        )
-
-                        Log.e(TAG, mfccFeatures[0].toString())
-
-                        Log.e(TAG, "Valori moltiplicati: $multipliedFeatures")
-
-                        // Trova il valore massimo e il suo indice
-                        val maxValue = multipliedFeatures.maxOrNull()
-                        val maxIndex = multipliedFeatures.indexOf(maxValue)
-
-                        val emotion: String = when (maxIndex) {
-                            0 -> "Neutral"
-                            1 -> "Happy"
-                            2 -> "Surprise"
-                            3 -> "Unpleasant"
-                            else -> "Unknown"
-                        }
-                        model.close()
-
-
-                        onButtonShowPopupWindowClick(recordButton.rootView, emotion)
                     }
                     recordButton.setBackgroundColor(R.color.purple_container_material_design_3)
                     recordButton.setBackgroundResource(R.drawable.round_button)
@@ -918,6 +930,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         return transposed.toList()
     }
+
+    private fun isLocationEnabled(): Boolean {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+    }
+
 }
 
 
