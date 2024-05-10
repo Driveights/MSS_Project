@@ -1,6 +1,7 @@
 package unipi.mss.geomotion
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
@@ -17,6 +18,7 @@ class HomeActivity : AppCompatActivity() {
     private val auth = FirebaseAuth.getInstance()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContentView(R.layout.home)
 
         val logbtn = findViewById<Button>(R.id.loginButton)

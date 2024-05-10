@@ -3,6 +3,7 @@ package unipi.mss.geomotion
 import android.app.UiModeManager
 import android.content.ContentValues.TAG
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
@@ -71,6 +72,7 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
 
         Log.d(TAG,"Layout creation")
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContentView(R.layout.activity_login)
         Log.d(TAG,"Searching google button")
         // --------------- GOOGLE LOGIN -------------------

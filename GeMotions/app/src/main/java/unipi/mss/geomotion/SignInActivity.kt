@@ -5,6 +5,7 @@ package unipi.mss.geomotion
 import android.app.UiModeManager
 import android.content.ContentValues.TAG
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -52,6 +53,7 @@ class SignInActivity : AppCompatActivity(){
         }
         Log.d(TAG,"Layout creation")
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContentView(R.layout.activity_sign_in)
 
         Log.d(TAG,"Setting up manual registration")
