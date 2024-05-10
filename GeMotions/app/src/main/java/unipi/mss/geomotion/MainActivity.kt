@@ -257,12 +257,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         // Calcola i valori moltiplicati e visualizzali nel log come errore
                         val multipliedFeatures = listOf(
                             outputFeature0.getFloatValue(0),
-                            outputFeature0.getFloatValue(1),
-                            outputFeature0.getFloatValue(2),
+                            outputFeature0.getFloatValue(1) * 10,
+                            outputFeature0.getFloatValue(2) * 5,
                             outputFeature0.getFloatValue(3)
                         )
-
-                        Log.e(TAG, mfccFeatures[0].toString())
 
                         Log.e(TAG, "Valori moltiplicati: $multipliedFeatures")
 
@@ -300,43 +298,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d(TAG, "Slider value is $value")
         }
 
-    }
-    private fun startRecording() {
-        Log.d(TAG, "Sto iniziando a registrare")
-        if (permissionToRecordAccepted && !isRecording) {
-            recorder = MediaRecorder().apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setOutputFile(externalCacheDir?.absolutePath + "/audioFile.m4a")
-                setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT)
-
-                try {
-                    prepare()
-                    start()
-                    isRecording = true
-                }
-                catch (e: IOException) {
-                    e.printStackTrace()
-                }
-            }
-        }
-
-    }
-
-
-
-    private fun stopRecording() {
-        Log.d(TAG, "Ho finito registrare")
-        if (isRecording) {
-            try {
-                recorder?.stop()
-                recorder?.release()
-                isRecording = false
-
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
     }
 
 
