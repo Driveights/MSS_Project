@@ -416,7 +416,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     var lon = lastKnownLocation!!.longitude
 
                     // Upload the recording to a database
-                    dbManager.uploadRecording(lat, lon, mAuth.currentUser!!.email, emotion, uri.toString(), mAuth)
+                    dbManager.uploadRecording(lat, lon, emotion, uri.toString(), mAuth)
                     popupWindow.dismiss()
                 }
             }.addOnFailureListener { exception ->
