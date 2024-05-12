@@ -12,6 +12,8 @@
   
 
 ## ToDo List
+- [] Rivedere il capitolo 1, soprattuto provare ad aggiungere un related work
+- [] Fare capitoli 2,3,4
 - [] Capire come salvare i dati --> Useare FireStore, perchè: permette la gestione dei TTL in modo facile (Cancellazione automatica degli elementi dopo un tot, quell oche vogliamo noi); permette ordinamento e filtro composti (RealTime database non permette query con ordinamento e filtro composti); in ottica di scalarizzazione "ospita i tuoi dati in più data center in regioni distinte, garantendo scalabilità globale e forte affidabilità";
 Probabilmente conviene usare Google Cloud per salvare gli audio e mettere nella collezione il link per scaricare (2 chiamate HTTP); altrimenti mettere tutto su Firestore, riporto cosa suggerisce ChatGPT 
 "
