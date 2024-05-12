@@ -213,6 +213,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         Toast.makeText(this, "You must give permission to use microphone",Toast.LENGTH_LONG).show()
                     }else if( !locationPermissionGranted){
                         Toast.makeText(this, "You must give permission to use your location",Toast.LENGTH_LONG).show()
+                    }else if(!locationEnabled()){
+                        Toast.makeText(this, "You must have GPS location active",Toast.LENGTH_LONG).show()
                     }else {     // ho entrambi i permessi
                         audioRecoder.startRecording(externalCacheDir?.absolutePath + "/audioFile.m4a")
                         recordButton.setBackgroundColor(R.color.purple_material_design_3)
@@ -226,11 +228,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 MotionEvent.ACTION_UP -> {
                     getRecordPermission()
                     scaleUp.start()
-                    if (!permissionToRecordAccepted ){
-                        Toast.makeText(this, "You must give permission to use microphone",Toast.LENGTH_LONG).show()
-                    }else if( !locationPermissionGranted){
-                        Toast.makeText(this, "You must give permission to use your location",Toast.LENGTH_LONG).show()
-                    }else {
+                    if (permissionToRecordAccepted && locationPermissionGranted && locationEnabled()){
                         mfccRecorder.StopAudioDispatcher()
                         audioRecoder.stopRecording()
                         val emotion = quantizedModel.processAudio(this, mfccRecorder)
@@ -452,8 +450,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         var currentCircle: Circle? = null
 
         map.setOnMapClickListener { latLng ->
-            // Rimuovi il marker precedente se presente
-            currentMarker?.remove()
 
             // Ottieni le coordinate toccate
             val latitude = latLng.latitude
@@ -476,6 +472,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         val addressString = address.thoroughfare ?: "Indirizzo non disponibile"
                         // Aggiungi un marker alla posizione toccata
                         val markerOptions = utils.markerCustomed(recordingsResultDTO.getEmotion(), addressString, latLng)
+                        // Rimuovi il marker precedente se presente
+                        currentMarker?.remove()
                         currentMarker = map.addMarker(markerOptions)
                         // Mostra le informazioni ottenute in un Toast
                     }
@@ -577,13 +575,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             cc_cached -=1
             if (cc_cached == 0.toLong()){
                 Log.d(TAG,"Ho cc_cached = 0")
+                Log.d(TAG,"Last tm: $last_timestamp")
+
                 dbManager.getRecordings(latidude,longitude,radius, last_timestamp,object : DbManager.DbCallback {
                     override fun onRecordingsResultReady(recordingsResultDTO: RecordingsResultDTO) {
                         Log.d(TAG,"Sto chiedendo nuove cose, speriamo non crashi")
+                        Log.d(TAG,"Last tm: $last_timestamp")
+                        Log.d(TAG, recordingsResultDTO.getlistOfRecordings().size.toString())
                         val pippo = recordingsResultDTO.getlistOfRecordings().iterator()
                         val buttonLoadMore = layoutInflater.inflate(R.layout.button_load_more, null)
                         buttonLoadMore.findViewById<Button>(R.id.buttonLoadMore).setOnClickListener {
-                            addRecordingToLayout(dialogLayout, pippo,latidude,radius,longitude, DbManager.LIMIT)
+                            addRecordingToLayout(dialogLayout, pippo,latidude,longitude, radius, DbManager.LIMIT)
                             dialogLayout.removeView(buttonLoadMore)
                         }
                         dialogLayout.addView(buttonLoadMore)
@@ -741,7 +743,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val M_MAX_ENTRIES = 5
     }
 
-
+    private fun locationEnabled(): Boolean {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+    }
 
 }
 
