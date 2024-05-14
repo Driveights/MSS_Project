@@ -14,7 +14,6 @@ import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
 import android.media.MediaPlayer
-import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -40,6 +39,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatRadioButton
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.github.squti.androidwaverecorder.WaveRecorder
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
