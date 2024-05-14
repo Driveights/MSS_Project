@@ -13,7 +13,7 @@ import kotlin.math.cos
 class DbManager {
 
     companion object {
-        val LIMIT: Long = 15
+        val LIMIT: Long = 30
     }
     interface DbCallback {
         fun onRecordingsResultReady(recordingsResultDTO: RecordingsResultDTO)

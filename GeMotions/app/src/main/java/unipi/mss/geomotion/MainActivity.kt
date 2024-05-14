@@ -115,6 +115,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var isRecording = false
     private var mfccRecorder: MFCCRecorder = MFCCRecorder()
     private var audioRecoder: AudioRecorder = AudioRecorder()
+    private lateinit var waveRecorder: WaveRecorder
     private var utils: Utils = Utils()
     private var quantizedModel : QuantizedModel = QuantizedModel()
     private var vokaturiModel : VokaturiModel = VokaturiModel()
@@ -216,11 +217,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }else if(!locationEnabled()){
                         Toast.makeText(this, "You must have GPS location active",Toast.LENGTH_LONG).show()
                     }else {     // ho entrambi i permessi
-                        audioRecoder.startRecording(externalCacheDir?.absolutePath + "/audioFile.m4a")
+
+
+                        //Uncomment to use the Vokaturi model
+                        waveRecorder = WaveRecorder(externalCacheDir!!.absolutePath + "/audioFile.wav")
+                        audioRecoder.startWavRecording(waveRecorder)
+
+                        //audioRecoder.startRecording(externalCacheDir!!.absolutePath + "/audioFile.m4a")
                         recordButton.setBackgroundColor(R.color.purple_material_design_3)
                         recordButton.setBackgroundResource(R.drawable.round_button)
-                        mfccRecorder.InitAudioDispatcher()
-                        mfccRecorder.startMfccExtraction()
+                        //mfccRecorder.InitAudioDispatcher()
+                        //mfccRecorder.startMfccExtraction()
                     }
                     true
                 }
@@ -229,15 +236,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     getRecordPermission()
                     scaleUp.start()
                     if (permissionToRecordAccepted && locationPermissionGranted && locationEnabled()){
-                        mfccRecorder.StopAudioDispatcher()
-                        audioRecoder.stopRecording()
-                        val emotion = quantizedModel.processAudio(this, mfccRecorder)
+                        //mfccRecorder.StopAudioDispatcher()
+                        //audioRecoder.stopRecording()
+                        //val emotion = quantizedModel.processAudio(this, mfccRecorder)
 
                         // Uncomment to use the Vokaturi Model
-                        /*
-                        val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.m4a"
+                        audioRecoder.stopWavRecording()
+                        val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.wav"
                         val emotion = vokaturiModel.processAudio(filePath)
-                        */
+
+
+
                         onButtonShowPopupWindowClick(recordButton.rootView, emotion)
                     }
                     recordButton.setBackgroundColor(R.color.purple_container_material_design_3)
@@ -285,6 +294,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // Initialize and configure the audio player inside the popup
 
         val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.m4a"
+        //  val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.wav"
+
         val mediaPlayer = MediaPlayer().apply {
 
             setDataSource(filePath)
@@ -597,7 +608,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 Log.d(TAG,"counter = 0")
                 val buttonLoadMore = layoutInflater.inflate(R.layout.button_load_more, null)
                 buttonLoadMore.findViewById<Button>(R.id.buttonLoadMore).setOnClickListener {
-                    addRecordingToLayout(dialogLayout, iterator,latidude,radius,longitude, cc_cached)
+                    addRecordingToLayout(dialogLayout, iterator,latidude,longitude,radius, cc_cached)
                     dialogLayout.removeView(buttonLoadMore)
                 }
                 dialogLayout.addView(buttonLoadMore)

@@ -25,18 +25,21 @@ class VokaturiModel {
         if (pr != null) {
             // Ordinare le emozioni in ordine decrescente di valore
             val emotions = listOf(
-                "Neutralità" to pr.neutrality,
-                "Felicità" to pr.happiness,
-                "Rabbia" to pr.anger,
-                "Tristezza" to pr.sadness,
-                "Paura" to pr.fear
+                "Neutral" to pr.neutrality,
+                "Happy" to pr.happiness,
+                "Unpleasant" to pr.anger,
+                "Unpleasant" to pr.sadness,
+                "Surprise" to pr.fear
             ).sortedByDescending { it.second }
 
-            // Costruire la stringa delle informazioni in ordine decrescente
-            emotion = emotions.joinToString("\n") { "${it.first}: ${it.second}" }
+            // Selezionare solo l'emozione con il valore più alto
+            val highestEmotion = emotions.firstOrNull()
+
+            // Costruire la stringa solo con l'emozione di valore più alto
+            emotion = highestEmotion?.first ?: "No emotion detected"
         }
 
-        return emotion[0].toString()
+        return emotion
     }
     private fun wavToFloatArray(filePath: String): FloatArray? {
         val file = File(filePath)

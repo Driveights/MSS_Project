@@ -22,8 +22,8 @@ class AudioRecorder {
     private var isRecording: Boolean = false
     private lateinit var waveRecorder: WaveRecorder
 
-
-    private fun startWavRecording() {
+    fun startWavRecording(wav : WaveRecorder) {
+        waveRecorder = wav
         if (!isRecording) {
             // Avvio della registrazione con WaveRecorder
             waveRecorder.waveConfig.sampleRate = 44100
@@ -34,7 +34,7 @@ class AudioRecorder {
         }
     }
 
-    private fun stopWavRecording() {
+    fun stopWavRecording() {
         if (isRecording) {
             // Interruzione della registrazione con WaveRecorder
             Log.d(TAG, "Sto finendo di registrare")
