@@ -9,7 +9,6 @@ import android.widget.SeekBar
 import android.widget.TextView
 import com.github.squti.androidwaverecorder.WaveRecorder
 import unipi.mss.geomotion.R
-import vokaturi.vokaturisdk.entities.Voice
 import java.io.DataInputStream
 import java.io.File
 import java.io.FileInputStream

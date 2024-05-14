@@ -5,15 +5,10 @@ import android.Manifest
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.annotation.SuppressLint
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
@@ -37,7 +32,6 @@ import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.RadioGroup
 import android.widget.ScrollView
-import android.widget.SeekBar
 import android.widget.Space
 import android.widget.TextView
 import android.widget.Toast
@@ -46,7 +40,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatRadioButton
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.github.squti.androidwaverecorder.WaveRecorder
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -55,13 +48,11 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.slider.Slider
@@ -69,13 +60,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 import java.io.File
 import java.util.Locale
-import org.tensorflow.lite.DataType
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
-import java.io.IOException
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.UUID
-
 
 /**
  * An activity that displays a map showing the place at the device's current location.
@@ -111,15 +96,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         Manifest.permission.ACCESS_COARSE_LOCATION
     )
     private var permissionToRecordAccepted = false
-    private var recorder: MediaRecorder? = null
-    private var isRecording = false
     private var mfccRecorder: MFCCRecorder = MFCCRecorder()
     private var audioRecoder: AudioRecorder = AudioRecorder()
     private lateinit var waveRecorder: WaveRecorder
     private var utils: Utils = Utils()
     private var quantizedModel : QuantizedModel = QuantizedModel()
     private var vokaturiModel : VokaturiModel = VokaturiModel()
-
     // Gestione login/logout
     private lateinit var mGoogleSignInClient: GoogleSignInClient
     private val mAuth = FirebaseAuth.getInstance()

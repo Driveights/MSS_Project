@@ -15,7 +15,6 @@
         android:textStyle="bold"
         android:text="YOUR REC" />
 
-
     <RelativeLayout
         android:id="@+id/audioPlayerLayout"
         android:layout_width="match_parent"
@@ -119,9 +118,6 @@
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
     </RadioGroup>
-
-
-
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="0dp"
@@ -145,6 +141,5 @@
             android:layout_margin="32dp"
             android:text="Send"
             android:textColor="#FFFFFF" />
-
     </RelativeLayout>
 </LinearLayout>

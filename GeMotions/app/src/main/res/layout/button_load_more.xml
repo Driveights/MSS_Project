@@ -22,5 +22,4 @@ android:background="@drawable/rounded_popup_background"> <!-- Applica lo sfondo 
         android:textColor="#FFFFFF" />
 </RelativeLayout>
 
-
 </LinearLayout>
