@@ -202,14 +202,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
                         //Uncomment to use the Vokaturi model
-                        waveRecorder = WaveRecorder(externalCacheDir!!.absolutePath + "/audioFile.wav")
-                        audioRecoder.startWavRecording(waveRecorder)
+                        //waveRecorder = WaveRecorder(externalCacheDir!!.absolutePath + "/audioFile.wav")
+                        //audioRecoder.startWavRecording(waveRecorder)
 
-                        //audioRecoder.startRecording(externalCacheDir!!.absolutePath + "/audioFile.m4a")
+                        audioRecoder.startRecording(externalCacheDir!!.absolutePath + "/audioFile.m4a")
                         recordButton.setBackgroundColor(R.color.purple_material_design_3)
                         recordButton.setBackgroundResource(R.drawable.round_button)
-                        //mfccRecorder.InitAudioDispatcher()
-                        //mfccRecorder.startMfccExtraction()
+                        mfccRecorder.InitAudioDispatcher()
+                        mfccRecorder.startMfccExtraction()
                     }
                     true
                 }
@@ -218,16 +218,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     getRecordPermission()
                     scaleUp.start()
                     if (permissionToRecordAccepted && locationPermissionGranted && locationEnabled()){
-                        //mfccRecorder.StopAudioDispatcher()
-                        //audioRecoder.stopRecording()
-                        //val emotion = quantizedModel.processAudio(this, mfccRecorder)
+                        mfccRecorder.StopAudioDispatcher()
+                        audioRecoder.stopRecording()
+                        val emotion = quantizedModel.processAudio(this, mfccRecorder)
 
                         // Uncomment to use the Vokaturi Model
-                        audioRecoder.stopWavRecording()
-                        val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.wav"
-                        val emotion = vokaturiModel.processAudio(filePath)
-
-
+                        //audioRecoder.stopWavRecording()
+                        //val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.wav"
+                        //val emotion = vokaturiModel.processAudio(filePath)
 
                         onButtonShowPopupWindowClick(recordButton.rootView, emotion)
                     }
