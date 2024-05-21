@@ -271,11 +271,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // Show the popup window
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
 
-        // Initialize and configure the audio player inside the popup
 
         val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.m4a"
-        //  val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.wav"
-
         val mediaPlayer = MediaPlayer().apply {
 
             setDataSource(filePath)
@@ -436,7 +433,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI()
 
-        //MARCO
         var currentMarker: Marker? = null
         var currentCircle: Circle? = null
 
@@ -468,7 +464,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         currentMarker = map.addMarker(markerOptions)
                         // Mostra le informazioni ottenute in un Toast
                     }
-
 
                     // Aggiungi il cerchio
                     currentCircle?.remove()

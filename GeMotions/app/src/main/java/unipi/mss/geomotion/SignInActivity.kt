@@ -2,6 +2,7 @@ package unipi.mss.geomotion
 
 
 
+import android.app.AlertDialog
 import android.app.UiModeManager
 import android.content.ContentValues.TAG
 import android.content.Intent
@@ -16,7 +17,6 @@ import android.widget.TextView
 import android.widget.Toast
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
-import unipi.mss.geomotion.MainActivity
 
 class SignInActivity : AppCompatActivity(){
     // get FirebaseAuth object to handle authentication
@@ -80,34 +80,54 @@ class SignInActivity : AppCompatActivity(){
         val email = editTextEmail.text
         val password = editTextPassword.text
 
-        if (email.isNullOrBlank()){
-            Toast.makeText(this,"Enter email",Toast.LENGTH_SHORT).show()
+        if (email.isNullOrBlank()) {
+            showRetryDialog("Enter email")
             return
         }
 
-        if (password.isNullOrBlank()){
-            Toast.makeText(this,"Enter password",Toast.LENGTH_SHORT).show()
+        if (password.isNullOrBlank()) {
+            showRetryDialog("Enter password")
             return
         }
 
         auth.createUserWithEmailAndPassword(email.toString(), password.toString())
             .addOnCompleteListener(this) { task ->
+                progressBar.visibility = View.GONE
                 if (task.isSuccessful) {
-                    progressBar.visibility = View.GONE
                     // Sign in success, update UI with the signed-in user's information
                     Log.d(TAG, "createUserWithEmail:success")
                     Toast.makeText(baseContext, "Account successfully created.", Toast.LENGTH_SHORT).show()
                     val intent = Intent(this, MainActivity::class.java)
                     startActivity(intent)
                     finish()
-
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.", Toast.LENGTH_SHORT).show()
-
+                    showRetryDialog(task.exception?.message)
                 }
             }
     }
+
+    private fun showRetryDialog(message: String?) {
+        AlertDialog.Builder(this)
+            .setTitle("Registration Failed")
+            .setMessage("Registration failed: $message")
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+                progressBar.visibility = View.GONE
+                editTextEmail.text?.clear()
+                editTextPassword.text?.clear()
+            }
+            .create()
+            .show()
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        val intent = Intent(this, HomeActivity::class.java)
+        startActivity(intent)
+        finish() // Chiude l'attività corrente e torna alla pagina precedente nella pila delle attività
+    }
+
 }
 

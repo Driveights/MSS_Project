@@ -43,6 +43,7 @@
         android:id="@+id/password"
         android:hint="@string/password"
         android:textColor="@color/white"
+        android:inputType="textPassword"
         />
     </com.google.android.material.textfield.TextInputLayout>
 

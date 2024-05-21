@@ -67,7 +67,6 @@ class DbManager {
                         "timestamp" to document.data["timestamp"].toString()
                     )
                     Log.d(TAG,document.data["email"].toString())
-                    
                     recordingsResultDTO.addRecording(recordInfo)
                 }
                 var maxEmotion = "Unknown"

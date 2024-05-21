@@ -1,5 +1,6 @@
 package unipi.mss.geomotion
 
+import android.app.AlertDialog
 import android.app.UiModeManager
 import android.content.ContentValues.TAG
 import android.content.Intent
@@ -111,12 +112,12 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
 
         // Check if email or password are null
         if (email.isNullOrBlank()) {
-            Toast.makeText(this, "Enter email", Toast.LENGTH_SHORT).show()
+            showRetryDialog("Enter email")
             return
         }
 
         if (password.isNullOrBlank()) {
-            Toast.makeText(this, "Enter password", Toast.LENGTH_SHORT).show()
+            showRetryDialog("Enter password")
             return
         }
 
@@ -133,9 +134,7 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithEmail:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.", Toast.LENGTH_SHORT)
-                        .show()
-
+                    showRetryDialog("Authentication failed.")
                 }
             }
     }
@@ -161,8 +160,7 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
                 val account = task.getResult(ApiException::class.java)
                 firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
-                Toast.makeText(this, "Google sign in failed: ${e.message}", Toast.LENGTH_SHORT)
-                    .show()
+                showRetryDialog("Google sign in failed: ${e.message}")
             }
         }
     }
@@ -179,8 +177,9 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
                     startActivity(Intent(this, MainActivity::class.java))
                     finish()
                 } else {
-                    Log.w(TAG, "signInWithGoogle:success", task.exception)
-                    Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show()
+                    // If sign in fails, display a message to the user.
+                    Log.w(TAG, "LoginUser:failure", task.exception)
+                    showRetryDialog(task.exception?.message)
                 }
             }
     }
@@ -188,4 +187,27 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
     override fun onConnectionFailed(p0: ConnectionResult) {
         Log.w(TAG, "signInWithGoogle:connectionFailed")
     }
+
+    private fun showRetryDialog(message: String?) {
+        AlertDialog.Builder(this)
+            .setTitle("Registration Failed")
+            .setMessage("Registration failed: $message")
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+                progressBar.visibility = View.GONE
+                editTextEmail.text?.clear()
+                editTextPassword.text?.clear()
+            }
+            .create()
+            .show()
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        val intent = Intent(this, HomeActivity::class.java)
+        startActivity(intent)
+        finish() // Chiude l'attività corrente e torna alla pagina precedente nella pila delle attività
+    }
+
 }
+
