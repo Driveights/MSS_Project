@@ -4,7 +4,6 @@ Line of codes: -
 Number of commits: -
 
 Non coding activities:
-- Machine Learning Model for Speech Emotion Recognition research
 
 24/04/2024
 Group Meeting: discussion about:
@@ -12,22 +11,61 @@ Group Meeting: discussion about:
 	- which data need to be stored;
 	- if and how to use Google API to login and to use the map;
 	- search a neural network for speech emotion recognition
-	- we decide to implement favorites friends approach
 	- we decide to ask to the user if he/she want to allow the GPS
 	- role division
 
 26/04/2024
-Pair work with Daniel Deiana:
+Pair work with D. Deiana:
 	- Android Studio Project creation
-	- Integration of Google Map in the project
+	- Google Map API key recovered
 	- Research for ML model
-	- Integration of the ML model in the project
 
 29/04/2024
-Pair work with Daniel Deiana:
-	- Recording button logic
+Pair work with D. Deiana:
+	- Discussion and research on ML models
+	- Collected information about audio processing
 
 04/05/2024
-	- Audio conversion in .wav format
+	- Handle of Vokaturi API Model input and output
 
+06/05
+Group Meeting:
+	- we decided on the final look of the UI, the main features and possible future developments
+	- role division
+	- merge of work carried out individually
+
+08/05
+Pair work with D. Bruni:
+	- Handle permissions for microphone and location
+
+09/05
+Group Meeting:
+	- Decision to give the opportunity to the user to change the emotion predicted by the model
+	- Improvement and  bug fixing of UI
+
+10/05
+Group Meeting:
+	- Improvement and  bug fixing of UI
+
+
+11/05/2024
+Pair work with D. Deiana:
+	- Tuning and practic tests on the accuracies of the ML models
+
+14/05
+Pair work with D. Deiana:
+	- Test on energy consumptions using 'adb' and battery historian
+	- Choices taken on thresholds and model to use based on the results obtained
+
+21/05
+Group Meeting:
+	- Documentation of the project completed, merging the test results made by me and D.Deiana.
+
+22/05
+Group Meeting:
+	- Creation of the presentation of the project.
+
+25/05
+Group Meeting: 
+	- Presentation of the project completed.
 
