@@ -1,0 +1,61 @@
+Marco Galante
+
+Line of codes: -
+Number of commits: -
+
+Non coding activities:
+
+24/04/2024
+Group Meeting: discussion about:
+	- application interface design;
+	- which data need to be stored;
+	- if and how to use Google API to login and to use the map;
+	- search a neural network for speech emotion recognition
+	- we decide to ask to the user if he/she want to allow the GPS
+	- role division
+
+03/05
+Collected information about Authentication, CloudFire and Login with Google. Start implementation of Authentication part.
+
+06/05
+Group Meeting:
+- we decided on the final look of the UI, the main features and possible future developments
+- role division
+- merge of work carried out individually
+
+07/05
+Work done in pairs with D. Bruni:
+- Configuration and test of Google Storage and Firestore
+- Improvement and bug fixing of UI
+
+08/05
+Work done in pairs with D. Deiana:
+- Improvement and bug fixing of UI
+
+09/05
+Group Meeting: 
+- Decision to give the opportunity to the users to change the emotion predicted by the model.
+- Improvement and bug fixing of UI
+
+10/05
+Group Meeting: 
+- Improvement and bug fixing of UI
+
+14/05
+Work done in pairs with D.Bruni:
+- Starting the project documentation, focusing on the introduction and the architecture of the entire project.
+Pair work with L.Guidotti:
+  - Creation of the GeoMotions Logo
+
+21/05
+Group Meeting:
+- Merging the test results made by L.Guidotti and D.Deiana
+- Complete the documentation of the project, 
+
+22/05
+Group Meeting:
+- Creation of the presentation of the project.
+
+25/05
+Group Meeting: 
+- Presentation of the project completed.
