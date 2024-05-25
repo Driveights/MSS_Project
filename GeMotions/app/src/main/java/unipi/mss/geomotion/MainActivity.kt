@@ -201,15 +201,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }else {     // ho entrambi i permessi
 
 
-                        //Uncomment to use the Vokaturi model
+                        //Uncomment here and comment below to use the Vokaturi model
                         //waveRecorder = WaveRecorder(externalCacheDir!!.absolutePath + "/audioFile.wav")
                         //audioRecoder.startWavRecording(waveRecorder)
 
                         audioRecoder.startRecording(externalCacheDir!!.absolutePath + "/audioFile.m4a")
-                        recordButton.setBackgroundColor(R.color.purple_material_design_3)
-                        recordButton.setBackgroundResource(R.drawable.round_button)
                         mfccRecorder.InitAudioDispatcher()
                         mfccRecorder.startMfccExtraction()
+
+                        recordButton.setBackgroundColor(R.color.purple_material_design_3)
+                        recordButton.setBackgroundResource(R.drawable.round_button)
                     }
                     true
                 }
@@ -222,7 +223,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         audioRecoder.stopRecording()
                         val emotion = quantizedModel.processAudio(this, mfccRecorder)
 
-                        // Uncomment to use the Vokaturi Model
+                        //Uncomment here and comment up to use the Vokaturi model
                         //audioRecoder.stopWavRecording()
                         //val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.wav"
                         //val emotion = vokaturiModel.processAudio(filePath)
@@ -273,6 +274,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.m4a"
+        //val filePath: String = externalCacheDir!!.absolutePath + "/audioFile.wav"
+
         val mediaPlayer = MediaPlayer().apply {
 
             setDataSource(filePath)
@@ -381,7 +384,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     /**
      * Saves the state of the map when the activity is paused.
      */
-    // [START maps_current_place_on_save_instance_state]
     override fun onSaveInstanceState(outState: Bundle) {
         map?.let { map ->
             outState.putParcelable(KEY_CAMERA_POSITION, map.cameraPosition)
@@ -389,7 +391,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         super.onSaveInstanceState(outState)
     }
-    // [END maps_current_place_on_save_instance_state]
 
     /**
      * Sets up the options menu.
@@ -400,13 +401,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         menuInflater.inflate(R.menu.current_place_menu, menu)
         return true
     }
-    // [END maps_current_place_on_options_item_selected]
 
     /**
      * Manipulates the map when it's available.
      * This callback is triggered when the map is ready to be used.
      */
-    // [START maps_current_place_on_map_ready]
     override fun onMapReady(map: GoogleMap) {
         this.map = map
         // Use a custom info window adapter to handle multiple lines of text in the
@@ -515,7 +514,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-
     private fun addRecordingToLayout(dialogLayout: ViewGroup, iterator: MutableIterator<HashMap<String, String>>, latidude:Double, longitude:Double, radius:Double, counter_cached : Long = DbManager.LIMIT){
         var counter = 3
         var cc_cached = counter_cached
@@ -596,7 +594,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     /**
      * Gets the current location of the device, and positions the map's camera.
      */
-    // [START maps_current_place_get_device_location]
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
         /*
@@ -630,12 +627,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 LatLng(0.0, 0.0), DEFAULT_ZOOM.toFloat()))
         }
     }
-    // [END maps_current_place_get_device_location]
 
     /**
      * Prompts the user for permission to use the device location.
      */
-    // [START maps_current_place_location_permission]
     private fun getLocationPermission() {
         if (ContextCompat.checkSelfPermission(
                 this.applicationContext,
@@ -656,12 +651,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             permissionToRecordAccepted = true
         }
     }
-    // [END maps_current_place_location_permission]
 
     /**
      * Handles the result of the request for location permissions.
      */
-    // [START maps_current_place_on_request_permissions_result]
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
             REQUEST_LOCATION_PERMISSION -> {
@@ -686,13 +679,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
     }
-    // [END maps_current_place_on_request_permissions_result]
 
 
     /**
      * Updates the map's UI settings based on whether the user has granted location permission.
      */
-    // [START maps_current_place_update_location_ui]
     @SuppressLint("MissingPermission")
     private fun updateLocationUI() {
         if (map == null) {
@@ -706,27 +697,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 map?.isMyLocationEnabled = false
                 map?.uiSettings?.isMyLocationButtonEnabled = false
                 lastKnownLocation = null
-                //getPermissions()
             }
         } catch (e: SecurityException) {
             Log.e("Exception: %s", e.message, e)
         }
     }
-    // [END maps_current_place_update_location_ui]
 
     companion object {
         internal val TAG = MainActivity::class.java.simpleName
         private const val DEFAULT_ZOOM = 15
-        private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
-
-        // Keys for storing activity state.
-        // [START maps_current_place_state_keys]
         private const val KEY_CAMERA_POSITION = "camera_position"
         private const val KEY_LOCATION = "location"
-        // [END maps_current_place_state_keys]
 
-        // Used for selecting the current place.
-        private const val M_MAX_ENTRIES = 5
     }
 
     private fun locationEnabled(): Boolean {

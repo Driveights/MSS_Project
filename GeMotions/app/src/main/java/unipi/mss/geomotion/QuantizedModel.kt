@@ -35,15 +35,13 @@ class QuantizedModel {
         val outputs = model.process(inputFeature0)
         val outputFeature0 = outputs.outputFeature0AsTensorBuffer
 
-        // Calcola i valori moltiplicati e visualizzali nel log come errore
+        // Calcola i valori moltiplicati secondo tuning
         val multipliedFeatures = listOf(
             outputFeature0.getFloatValue(0) * 2,
             outputFeature0.getFloatValue(1) * 70,
             outputFeature0.getFloatValue(2) * 6,
             outputFeature0.getFloatValue(3)
         )
-
-        Log.e(MainActivity.TAG, "Valori moltiplicati: $multipliedFeatures")
 
         // Trova il valore massimo e il suo indice
         val maxValue = multipliedFeatures.maxOrNull()
