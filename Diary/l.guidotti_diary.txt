@@ -57,6 +57,9 @@ Pair work with D. Deiana:
 	- Test on energy consumptions using 'adb' and battery historian
 	- Choices taken on thresholds and model to use based on the results obtained
 
+Pair work with M. Galante:
+	- Creation of the GeoMotions Logo
+
 21/05
 Group Meeting:
 	- Documentation of the project completed, merging the test results made by me and D.Deiana.
