@@ -1,1 +1,68 @@
+Daniel Deiana
 
+Line of codes: -
+
+Number of commits: -
+
+Non coding activities:
+
+24/04/2024
+Group Meeting: discussion about:
+  - application interface design;
+  - which data need to be stored;
+  - if and how to use Google API to login and to use the map;
+  - search a neural network for speech emotion recognition
+  - we decide to ask to the user if he/she want to allow the GPS
+  - role division
+
+26/04/2024
+Pair work with L. Guidotti:
+  - Android Studio Project creation
+  - Google Map API key recovered
+  - Research for ML model
+
+29/04/2024
+Pair work with L. Guidotti:
+  - Discussion and research on ML models
+  - Collected information about audio processing
+
+04/05/2024
+  - Handle of Vokaturi API Model input and output
+
+06/05
+Group Meeting:
+  - we decided on the final look of the UI, the main features and possible future developments
+  - role division
+  - merge of work carried out individually
+
+09/05
+Group Meeting:
+  - Decision to give the opportunity to the user to change the emotion predicted by the model
+  - Improvement and  bug fixing of UI
+
+10/05
+Group Meeting:
+  - Improvement and  bug fixing of UI
+
+
+11/05/2024
+Pair work with L. Guidotti:
+  - Tuning and practic tests on the accuracies of the ML models
+
+14/05
+Pair work with L. Guidotti:
+  - Test on energy consumptions using 'adb' and battery historian
+  - Choices taken on thresholds and model to use based on the results obtained
+
+
+21/05
+Group Meeting:
+  - Documentation of the project completed, merging the test results made by me and L. Guidotti.
+
+22/05
+Group Meeting:
+  - Creation of the presentation of the project.
+
+25/05
+Group Meeting:
+  - Presentation of the project completed.
