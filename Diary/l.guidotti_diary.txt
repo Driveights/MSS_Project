@@ -1,7 +1,7 @@
 Lorenzo Guidotti
 
-Line of codes: -
-Number of commits: 23
+Due to limitations with some of our laptops, the number of commits and lines of code added to the project do not accurately reflect the true contributions of each team member. Often, a single commit represents the work of multiple people. Therefore, while we don't report the exact number of lines of code, we assure you that the contributions to the project were equally distributed among all members of the group.
+
 
 Non coding activities:
 
