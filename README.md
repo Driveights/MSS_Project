@@ -1,45 +1,75 @@
-# MSS_Project
+# GeoMotion - Repository
 
-## Cose da implementare
-- Per ora tutti vedono gli audio di tutti
-- Dopo un giorno dall'input audio gli audio spariscono
-- Potenzialmente cambiare rete neurale
-  
+## Overview
 
-## Schermata
+GeoMotion is an innovative Android application designed to capture and associate emotions with geographic locations using audio recordings. This project leverages a Neural Network to extract emotions directly from audio, allowing users to explore the emotional landscape of different areas. The application integrates Firebase for user authentication, Google Maps API for location services, and Google Cloud for audio storage. 
 
--Le emozioni sono visibili solo dopo il tocco /la selezione di un luogo sulla mappa
-  
+## Key Features
 
-## ToDo List
-- [] Rivedere il capitolo 1, soprattuto provare ad aggiungere un related work
-- [] Fare capitoli 2,3,4
-- [] Capire come salvare i dati --> Useare FireStore, perchè: permette la gestione dei TTL in modo facile (Cancellazione automatica degli elementi dopo un tot, quell oche vogliamo noi); permette ordinamento e filtro composti (RealTime database non permette query con ordinamento e filtro composti); in ottica di scalarizzazione "ospita i tuoi dati in più data center in regioni distinte, garantendo scalabilità globale e forte affidabilità";
-Probabilmente conviene usare Google Cloud per salvare gli audio e mettere nella collezione il link per scaricare (2 chiamate HTTP); altrimenti mettere tutto su Firestore, riporto cosa suggerisce ChatGPT 
-"
-- Salvare direttamente l'audio in Firestore:
-  - Vantaggi:
-    Semplicità: Può semplificare il processo di gestione dei file, poiché l'audio è memorizzato direttamente nel database.
-    Facilità di accesso: L'audio è immediatamente disponibile per l'applicazione mobile senza dover gestire ulteriori richieste HTTP o l'accesso a servizi di terze parti.
-    Offline support: Se la tua app supporta il lavoro offline, avere l'audio direttamente nel database può semplificare la gestione dei dati offline.
-  -  Svantaggi:
-    Costo dello spazio: L'archiviazione diretta dei file audio in Firestore può diventare costosa se hai un gran numero di file o file di grandi dimensioni.
-    Dimensioni limite dei documenti: Firestore ha un limite massimo di dimensioni per i documenti, quindi potresti dover affrontare problemi se l'audio è troppo grande.
-    Possibili problemi di prestazioni: Caricare e scaricare grandi quantità di dati audio potrebbe influire sulle prestazioni dell'applicazione.
-Salvare il link al file audio su Google Cloud Storage (GCS) in Firestore:
-- Vantaggi:
-    Risparmio di spazio: Conservando solo i link, puoi risparmiare spazio nel database Firestore.
-    Elasticità delle dimensioni: Non sei limitato dalle dimensioni massime dei documenti di Firestore, poiché i file audio sono memorizzati esternamente su GCS.
-    Costo: GCS potrebbe essere più economico rispetto all'archiviazione diretta in Firestore per grandi quantità di dati.
-- Svantaggi:
-    Complessità: Richiede l'implementazione di un sistema per gestire l'upload e il download dei file da GCS, oltre a dover gestire eventuali problemi di autorizzazione e sicurezza.
-    Prestazioni: L'accesso ai file audio richiede un'ulteriore richiesta HTTP e potrebbe influire sulle prestazioni dell'applicazione, specialmente in caso di connessioni lente o instabili.
-  "
-- [] Una volta terminata l'app, controllare che nel ruotare lo schermo/ricevere una chiamata/chiudere riaprire l'app, questa non crashi
-- [] Controllare che dark and white theme siano impostati bene
+- **Emotion Recognition from Audio**: Uses a Neural Network to identify emotions directly from audio recordings, bypassing traditional Speech-to-Text processes.
+- **User Authentication**: Managed via Firebase, allowing seamless sign-in with Google accounts.
+- **Location Mapping**: Utilizes Google Maps API to link audio recordings with geographic locations.
+- **Efficient Storage**: Audio recordings are stored in Google Cloud Storage, with URLs saved in Firestore for efficient data retrieval.
+- **Energy Efficiency**: Optimized power consumption to ensure sustainability for mobile users.
+- **Potential Applications**: Social media sharing, sociological and psychological research, tourism insights.
 
-### Daniel e Lorenzo
-- Implementare registrazione audio
+## Architecture
 
-### Marco e Davide
-- Implementare ricerca dei luoghi
+GeoMotion's architecture integrates several key components:
+
+1. **Firebase**: Manages user authentication and stores user session information.
+2. **Google Maps API**: Displays maps and current user location.
+3. **Firestore**: Stores metadata and URLs for audio recordings.
+4. **Google Cloud Storage (GCS)**: Stores the actual audio files.
+5. **TFLite Model**: Processes audio data to recognize emotions, achieving approximately 73% accuracy.
+
+## Installation
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/your-username/GeoMotion.git
+   ```
+2. **Open the Project in Android Studio**:
+   - Ensure you have the latest version of Android Studio installed.
+   - Open the project directory in Android Studio.
+3. **Configure Firebase**:
+   - Create a Firebase project and add the Android app.
+   - Download the `google-services.json` file and place it in the `app` directory.
+4. **Build and Run the Application**:
+   - Sync the project with Gradle files.
+   - Build and run the application on an Android device or emulator.
+
+## Usage
+
+1. **Sign In**:
+   - Open the app and sign in using your Google account.
+2. **Record Audio**:
+   - Allow microphone and location access.
+   - Record audio and save it with the associated location.
+3. **Explore Emotions on the Map**:
+   - View different areas on the map and explore the predominant emotions associated with them.
+   - Play back audio recordings to hear the sounds linked to specific locations.
+
+## Future Developments
+
+- **Model Customization**: Enhance performance by allowing user-specific emotion models.
+- **Multimodal Classifier**: Incorporate additional data from smart devices (e.g., heart rate) for improved emotion recognition.
+- **Privacy Enhancements**: Implement follower/following features to control who can access recordings.
+- **Tourism Features**: Enable searches for specific emotions in different areas, aiding tourists in exploring vibrant or safer places.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+For any questions or suggestions, please contact:
+
+- Davide Bruni: d.bruni6@studenti.unipi.it
+- Daniel Deiana: d.deiana1@studenti.unipi.it
+- Marco Galante: m.galante1@studenti.unipi.it
+- Lorenzo Guidotti: l.guidotti6@email.com
+
+---
+
+Thank you for using GeoMotion! We hope our application helps you explore the emotional landscape of your surroundings in a new and insightful way.
