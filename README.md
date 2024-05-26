@@ -1,5 +1,8 @@
 # GeoMotion - Repository
 
+## GitHub link
+https://github.com/Driveights/MSS_Project
+
 ## Overview
 
 GeoMotion is an innovative Android application designed to capture and associate emotions with geographic locations using audio recordings. This project leverages a Neural Network to extract emotions directly from audio, allowing users to explore the emotional landscape of different areas. The application integrates Firebase for user authentication, Google Maps API for location services, and Google Cloud for audio storage. 
@@ -68,7 +71,7 @@ For any questions or suggestions, please contact:
 - Davide Bruni: d.bruni6@studenti.unipi.it
 - Daniel Deiana: d.deiana1@studenti.unipi.it
 - Marco Galante: m.galante1@studenti.unipi.it
-- Lorenzo Guidotti: l.guidotti6@email.com
+- Lorenzo Guidotti: l.guidotti6@studenti.unipi.it
 
 ---
 
