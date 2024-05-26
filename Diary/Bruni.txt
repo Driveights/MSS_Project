@@ -1,7 +1,6 @@
 Davide Bruni
 
-Line of codes: -
-Number of commits: -
+Due to limitations with some of our laptops, the number of commits and lines of code added to the project do not accurately reflect the true contributions of each team member. Often, a single commit represents the work of multiple people. Therefore, while we don't report the exact number of lines of code, we assure you that the contributions to the project were equally distributed among all members of the group.
 
 Non coding activities:
 
@@ -38,3 +37,40 @@ Group Meeting:
 Work done in pairs with M. Galante:
 - Configuration and test of Google Storage and Firestore
 - Improvement and  bug fixing of UI
+
+06/05
+Group Meeting:
+	- we decided on the final look of the UI, the main features and possible future developments
+	- role division
+	- merge of work carried out individually
+
+08/05
+Pair work with L. Guidotti:
+	- Handle permissions for microphone and location
+
+09/05
+Group Meeting:
+	- Decision to give the opportunity to the user to change the emotion predicted by the model
+	- Improvement and  bug fixing of UI
+
+10/05
+Group Meeting:
+	- Improvement and  bug fixing of UI
+
+
+14/05
+Work done in pairs with M.Galante:
+- Starting the project documentation, focusing on the introduction and the architecture of the entire project.
+
+
+21/05
+Group Meeting:
+	- Documentation of the project completed, merging the test results made by me and D.Deiana.
+
+22/05
+Group Meeting:
+	- Creation of the presentation of the project.
+
+25/05
+Group Meeting: 
+	- Presentation of the project completed.
